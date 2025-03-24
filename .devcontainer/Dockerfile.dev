@@ -1,0 +1,44 @@
+# Use a single-stage build
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
+ENV PATH="/app/.venv/bin:$PATH"
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
+    apt-get update && apt-get install -y nodejs gh \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy application code
+COPY . /app
+
+# Install dependencies
+RUN --mount=type=cache,target=/app/.cache/uv \
+    uv lock && uv sync --frozen
+
+# Create non-root user
+RUN mkdir -p /home && \
+    groupadd --gid 1000 docker && \
+    useradd --uid 1000 --gid 1000 --create-home --home-dir /home/docker --shell /bin/bash docker && \
+    chown -R docker:docker /app
+
+# Switch to non-root user
+USER docker
+
+# Expose port 8000 for the Django development server
+EXPOSE 8000
+
+# Start Django development server
+CMD ["uv", "run", "python", "manage.py", "runserver", "0.0.0.0:8000"]

@@ -1,0 +1,50 @@
+# Python bytecode
+*.pyc
+*.pyo
+__pycache__/
+
+# Django cache files
+.cache/
+
+# Environments
+.env
+.venv/
+venv/
+
+# Git
+.git/
+.gitconfig
+
+# Terminal
+.bash_history
+
+# Node modules (if applicable)
+node_modules/
+
+# IDE/editor directories
+.vscode/
+.idea/
+
+# VS Code
+.vscode/
+.vscode-server/
+
+# .NET
+.dotnet/
+
+# Static files (adjust path if needed)
+static/
+staticfiles/
+
+# Packages
+uv.lock
+
+# Cache files or other environment-specific files
+*.log
+
+.python_history
+.local/
+.npm/
+.cookiecutter_replay/
+.ruff_cache/
+.pytest_cache/

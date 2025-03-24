@@ -1,0 +1,66 @@
+# the .git directory (Git version control metadata)
+.git/
+.gitignore
+
+# Dockerfile and docker-compose.yml files (if not necessary in the image)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Django
+.cache/
+
+# build files and artifacts
+node_modules/
+build/
+dist/
+*.log
+*.bak
+*.swp
+*.swo
+
+# Python cache files (for Python projects)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# virtual environment directories (for Python projects)
+venv/
+.venv/
+.env
+
+# development environment files (IDE and editor files)
+.vscode/
+.idea/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# npm, yarn, or other package manager related files
+yarn.lock
+package-lock.json
+
+# test and coverage files
+coverage/
+*.cover
+*.test.js
+*.spec.js
+*.log
+*.out
+
+# documentation files (if not required in the image)
+README.md
+*.md
+
+# temporary files
+*.bak
+*.tmp
+
+# logs or debugging files
+*.log
+
+# CI/CD pipeline files
+*.yml
+*.yaml

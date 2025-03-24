@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+    Home
+{% endblock title %}
+{% block content %}
+    <div class="grid grid-cols-1 gap-6 p-4">
+        <!-- Repeat 10x for demo scroll -->
+        {% for i in "123456789123456789"|make_list %}
+            <div class="bg-white rounded-xl shadow-md overflow-hidden transition-transform duration-200 hover:shadow-lg">
+                <div class="p-4">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <span class="p-3 mr-3 bg-blue-500 text-md font-medium rounded-full text-white">+ 10</span>
+                        <div class="ml-5">
+                            <p class="font-semibold">Meir Garfinkel</p>
+                            <p class="text-sm text-gray-500">Mar 20, 2025, 3:41 PM</p>
+                        </div>
+                    </div>
+                    <div class="aspect-square bg-gray-100 rounded-lg"></div>
+                    <div class="mt-4">
+                        <div class="flex space-x-4 text-gray-500">
+                            <button class="hover:text-red-500 transition-colors">❤️ 1.2k</button>
+                            <button class="hover:text-blue-500 transition-colors">💬 245</button>
+                        </div>
+                        <p class="mt-2 text-sm">
+                            <span class="font-semibold">username</span> Lorem ipsum dolor sit amet consectetur adipisicing elit.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock content %}

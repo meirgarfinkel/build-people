@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="flex justify-center bg-gray-100">
+        <div class="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
+            <h2 class="text-center text-2xl font-semibold text-gray-800">Log In</h2>
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div>
+                        <label for="{{ field.id_for_label }}"
+                               class="block text-sm font-medium text-gray-700">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}<p class="mt-1 text-sm text-red-500">{{ field.errors.as_text }}</p>{% endif %}
+                    </div>
+                {% endfor %}
+                <button type="submit"
+                        class="mt-4 w-full rounded bg-blue-600 py-2 text-white hover:bg-blue-700">
+                    Log In
+                </button>
+            </form>
+            <p class="mt-4 text-sm text-gray-600">
+                Don't have an account?
+                <a href="{% url 'users:signup' %}"
+                   class="text-blue-600 hover:underline">Sign up</a>
+            </p>
+        </div>
+    </div>
+{% endblock content %}

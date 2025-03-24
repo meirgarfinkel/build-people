@@ -1,0 +1,32 @@
+{
+    "name": "gratify-2",
+    "dockerComposeFile": [
+        "../docker-compose.yml",
+        "docker-compose.override.yml"
+    ],
+    "service": "web",
+    "workspaceFolder": "/app",
+
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "terminal.integrated.shell.linux": "/bin/bash",
+                "python.defaultInterpreterPath": "/app/.venv/bin/python"
+            },
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-python.debugpy",
+                "ms-azuretools.vscode-docker",
+                "bradlc.vscode-tailwindcss",
+                "batisteo.vscode-django"
+            ]
+        }
+    },
+    "remoteUser": "docker",
+    "mounts": [
+        "source=${localEnv:HOME}/.ssh,target=/home/docker/.ssh,type=bind,consistency=cached"
+    ],
+    "postCreateCommand": "bash ./.devcontainer/post_install.sh"
+}

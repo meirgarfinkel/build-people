@@ -1,0 +1,9 @@
+services:
+  web:
+    build:
+      context: ./
+      dockerfile: .devcontainer/Dockerfile.dev
+    volumes:
+      - .:/app
+      - ./theme/static_src:/app/theme/static_src
+      - ./theme/static:/app/theme/static
