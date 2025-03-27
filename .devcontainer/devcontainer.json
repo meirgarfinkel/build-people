@@ -6,6 +6,7 @@
     ],
     "service": "web",
     "workspaceFolder": "/app",
+    "forwardPorts": [8000],
 
     "customizations": {
         "vscode": {

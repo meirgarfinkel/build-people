@@ -1,23 +1,31 @@
+<!DOCTYPE html>
 {% load static %}
 {% load static tailwind_tags %}
-<!DOCTYPE html>
+{% load hx_tags %}
 <html lang="en">
     <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <meta name="viewport"
-              content="width=device-width,minimum-scale=1,initial-scale=1">
         <title>
             {% block title %}
                 Build People
             {% endblock title %}
         </title>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="viewport"
+              content="width=device-width,minimum-scale=1,initial-scale=1">
         <meta name="description"
               content="A framework for launching new Django projects quickly.">
         <meta name="author" content="">
         <link rel="shortcut icon"
               type="image/x-icon"
               href="{% static 'images/favicon.ico' %}">
+        <!-- HTMX -->
+        <script src="https://unpkg.com/htmx.org@1.9.7"
+                integrity="sha384-EAzY246d6BpbWR7sQ8+WEm40J8c3dHFsqC58IgPlh4kMbRRI6P6WA+LA/qGAyAu8"
+                crossorigin="anonymous"></script>
+        <meta name="htmx-config" content='{"useTemplateFragments":"true"}'>
+        <script src="https://unpkg.com/htmx.org@1.9.11/dist/ext/alpine-morph.js"></script>
+        <script src="{% static 'js/base.js' %}"></script>
         {% block css %}
             {% tailwind_css %}
             <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css' %}">
@@ -32,20 +40,20 @@
                         <div class="flex flex-col gap-2 flex-grow">
                             <a class="w-full px-4 py-2 rounded-xl text-lg text-blue-500 font-bold">Build People</a>
                             <a href="{% url 'gratify:home' %}"
-                            class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-bookmark pr-2"></i>Home</a>
+                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-bookmark pr-2"></i>Home</a>
                             <a href="#"
-                            class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-chess-queen pr-2"></i>Leaderboard</a>
+                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-chess-queen pr-2"></i>Leaderboard</a>
                             <a href="#"
-                            class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-user pr-2"></i>Profile</a>
+                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-user pr-2"></i>Profile</a>
                             <hr />
+                            <a href="{% url 'gratify:subscriptions' %}"
+                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-building pr-2"></i>Organization</a>
                             <a href="#"
-                            class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-building pr-2"></i>Organization</a>
+                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-hand-back-fist pr-2"></i>Core Values</a>
                             <a href="#"
-                            class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-hand-back-fist pr-2"></i>Core Values</a>
+                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-star pr-2"></i>Awards</a>
                             <a href="#"
-                            class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-star pr-2"></i>Awards</a>
-                            <a href="#"
-                            class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-gem pr-2"></i>Rewards</a>
+                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-gem pr-2"></i>Rewards</a>
                             {% if user.is_superuser %}
                                 <a href="{% url 'admin:index' %}"
                                    class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-futbol pr-2"></i>Admin</a>
@@ -76,34 +84,34 @@
                 </button>
                 <!-- Mobile Menu Modal -->
                 <div id="mobileMenu"
-                    class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm">
+                     class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm">
                     <div class="flex items-center justify-center min-h-screen p-4">
                         <div class="bg-white w-full max-w-[250px] rounded-lg p-4 shadow-xl">
                             {% if user.is_authenticated %}
                                 <div class="flex flex-col gap-2">
                                     <a class="w-full px-4 py-2 rounded-xl text-lg text-blue-500 font-bold">Build People</a>
                                     <a href="#"
-                                        class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-bookmark pr-2"></i>Home</a>
+                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-bookmark pr-2"></i>Home</a>
                                     <a href="#"
-                                        class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-chess-queen pr-2"></i>Leaderboard</a>
+                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-chess-queen pr-2"></i>Leaderboard</a>
                                     <a href="#"
-                                        class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-user pr-2"></i>Profile</a>
+                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-user pr-2"></i>Profile</a>
                                     <hr />
+                                    <a href="{% url 'gratify:subscriptions' %}"
+                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-building pr-2"></i>Organization</a>
                                     <a href="#"
-                                        class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-building pr-2"></i>Organization</a>
+                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-hand-back-fist pr-2"></i>Core Values</a>
                                     <a href="#"
-                                        class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-hand-back-fist pr-2"></i>Core Values</a>
+                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-star pr-2"></i>Awards</a>
                                     <a href="#"
-                                        class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-star pr-2"></i>Awards</a>
-                                    <a href="#"
-                                        class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-gem pr-2"></i>Rewards</a>
+                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-gem pr-2"></i>Rewards</a>
                                     {% if user.is_superuser %}
                                         <a href="{% url 'admin:index' %}"
                                            class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-futbol pr-2"></i>Admin</a>
                                     {% endif %}
                                 </div>
                                 <a href="{% url 'users:logout' %}"
-                                class="w-full px-4 py-2 rounded-xl hover:bg-red-500 hover:text-white text-red-500 mt-auto">
+                                   class="w-full px-4 py-2 rounded-xl gap-2 hover:bg-red-500 hover:text-white text-red-500 mt-auto flex items-center justify-start">
                                     <i class="fa-solid fa-arrow-right-from-bracket pr-2"></i>Logout
                                 </a>
                             {% else %}
@@ -111,7 +119,7 @@
                                     <a class="w-full px-4 py-2 rounded-xl text-lg text-blue-500 font-bold">Build People</a>
                                 </div>
                                 <a href="{% url 'users:login' %}"
-                                class="w-full px-4 py-2 rounded-xl hover:bg-red-500 hover:text-white text-green-500 mt-auto">
+                                   class="w-full px-4 py-2 rounded-xl hover:bg-red-500 hover:text-white text-green-500 mt-auto">
                                     <i class="fa-solid fa-arrow-right-from-bracket pr-2"></i>Login
                                 </a>
                             {% endif %}
@@ -129,27 +137,30 @@
                 {% endblock content %}
             </div>
         </main>
-
         {% block javascript %}
             <script>
-                // Mobile Menu Toggle
-                const mobileMenuButton = document.getElementById('mobileMenuButton');
-                const mobileMenu = document.getElementById('mobileMenu');
-                const closeMenu = document.getElementById('closeMenu');
+                document.addEventListener("DOMContentLoaded", () => {
+                    // Select elements
+                    const mobileMenuButton = document.getElementById('mobileMenuButton');
+                    const mobileMenu = document.getElementById('mobileMenu');
+                    const closeMenu = document.getElementById('closeMenu');
             
-                mobileMenuButton.addEventListener('click', () => {
-                    mobileMenu.classList.remove('hidden');
-                });
+                    // Ensure elements exist before adding event listeners
+                    if (mobileMenuButton && mobileMenu && closeMenu) {
+                        mobileMenuButton.addEventListener('click', () => {
+                            mobileMenu.classList.remove('hidden');
+                        });
             
-                closeMenu.addEventListener('click', () => {
-                    mobileMenu.classList.add('hidden');
-                });
+                        closeMenu.addEventListener('click', () => {
+                            mobileMenu.classList.add('hidden');
+                        });
             
-                // Close modal when clicking outside
-                mobileMenu.addEventListener('click', (e) => {
-                    // Check if the clicked element is NOT inside the modal content
-                    if (!e.target.closest('.max-w-xs')) {
-                        mobileMenu.classList.add('hidden');
+                        // Close modal when clicking outside
+                        mobileMenu.addEventListener('click', (e) => {
+                            if (!e.target.closest('.max-w-xs')) {
+                                mobileMenu.classList.add('hidden');
+                            }
+                        });
                     }
                 });
             </script>
