@@ -1,9 +1,25 @@
 services:
   web:
+    tty: true
+    stdin_open: true
+    container_name: gratify_web
     build:
       context: ./
       dockerfile: .devcontainer/Dockerfile.dev
     volumes:
-      - .:/app
+      - .:/app:rw
       - ./theme/static_src:/app/theme/static_src
       - ./theme/static:/app/theme/static
+  
+  db:
+    container_name: gratify_db
+  
+  pgadmin:
+    container_name: gratify_pgadmin
+  
+  mailhog:
+    image: mailhog/mailhog
+    container_name: gratify_mailhog
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI

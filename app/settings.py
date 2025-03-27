@@ -1,5 +1,11 @@
 from pathlib import Path
+import os
 import socket
+
+from django.contrib import messages
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -10,7 +16,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-0peo@#x9jur3!h$ryje!$879xww8y1y66jx!%*#ymhg&jkozs2"
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -35,6 +41,7 @@ INSTALLED_APPS = [
     "crispy_forms",
     "crispy_tailwind",
     "debug_toolbar",
+    "hx_requests",
     # Local
     "shared",
     "users",
@@ -158,12 +165,15 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # https://django-crispy-forms.readthedocs.io/en/latest/install.html#template-packs
 CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
 CRISPY_TEMPLATE_PACK = "tailwind"
+CRISPY_FAIL_SILENTLY = not DEBUG
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-
-# https://docs.djangoproject.com/en/dev/ref/settings/#default-from-email
-DEFAULT_FROM_EMAIL = "root@localhost"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "mailhog"
+EMAIL_PORT = 1025
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = False
+DEFAULT_FROM_EMAIL = "no-reply@localhost"
 
 # django-debug-toolbar
 # https://django-debug-toolbar.readthedocs.io/en/latest/installation.html
@@ -204,3 +214,14 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+MESSAGE_TAGS = {
+    messages.DEBUG: "bg-info",
+    messages.INFO: "bg-info",
+    messages.SUCCESS: "bg-success",
+    messages.WARNING: "bg-warning",
+    messages.ERROR: "bg-danger",
+}
+HX_REQUESTS_USE_HX_MESSAGES = True
+HX_REQUESTS_HX_MESSAGES_TEMPLATE = "hx_messages.html"
+HX_REQUESTS_MODAL_TEMPLATE = "modal.html"
