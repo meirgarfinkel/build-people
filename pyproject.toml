@@ -18,5 +18,6 @@ dev = [
   "cookiecutter>=2.6.0",
   "djlint>=1.36.4",
   "python-dotenv>=1.0.1",
+  "ruff>=0.11.2",
   "typing_extensions ~=4.12",
 ]

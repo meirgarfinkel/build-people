@@ -27,23 +27,21 @@
     </head>
     <body>
         <div class="container">
-            {% with url="http://localhost:8000/gratify/subscriptions" %}
-                <iframe class="preview"
-                        src="{{ url }}"
-                        width="1600"
-                        height="980"
-                        title="Desktop"></iframe>
-                <iframe class="preview"
-                        src="{{ url }}"
-                        width="375"
-                        height="667"
-                        title="Mobile"></iframe>
-                <iframe class="preview"
-                        src="{{ url }}"
-                        width="1280"
-                        height="800"
-                        title="Laptop"></iframe>
-            {% endwith %}
+            <iframe class="preview"
+                    src="{{ url }}"
+                    width="1600"
+                    height="980"
+                    title="Desktop"></iframe>
+            <iframe class="preview"
+                    src="{{ url }}"
+                    width="375"
+                    height="667"
+                    title="Mobile"></iframe>
+            <iframe class="preview"
+                    src="{{ url }}"
+                    width="1280"
+                    height="800"
+                    title="Laptop"></iframe>
         </div>
     </body>
 </html>

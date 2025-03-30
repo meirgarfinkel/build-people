@@ -1,4 +1,4 @@
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.contrib.auth.views import LoginView as DjangoLoginView
 from django.views import View
@@ -6,8 +6,7 @@ from gratify.models import Company, EmployeeInvite
 from users.forms import EmailAuthenticationForm, EmployeeSignupForm, EmployerSignupForm
 from django.contrib.auth import login, logout
 from django.views.generic.edit import FormView
-
-from users.models import User
+from django.shortcuts import render
 
 
 class EmployerSignupView(FormView):
@@ -38,7 +37,18 @@ class EmployeeSignupView(FormView):
     success_url = reverse_lazy("gratify:home")
 
     def dispatch(self, request, *args, **kwargs):
-        self.invite = get_object_or_404(EmployeeInvite, token=self.kwargs["token"], used=False)
+        try:
+            self.invite = EmployeeInvite.objects.get(token=self.kwargs["token"], used=False)
+        except EmployeeInvite.DoesNotExist:
+            return render(
+                request,
+                "users/employee_invite_error.html",
+                {
+                    "message": "It seems like this invite link has expired.\nContact your admin to get a new link."
+                },
+                status=400
+            )
+
         return super().dispatch(request, *args, **kwargs)
     
     def get_form_kwargs(self):

@@ -20,11 +20,13 @@
               type="image/x-icon"
               href="{% static 'images/favicon.ico' %}">
         <!-- HTMX -->
-        <script src="https://unpkg.com/htmx.org@1.9.7"
-                integrity="sha384-EAzY246d6BpbWR7sQ8+WEm40J8c3dHFsqC58IgPlh4kMbRRI6P6WA+LA/qGAyAu8"
-                crossorigin="anonymous"></script>
+        <script src="{% static 'js/htmx.min.js' %}"></script>
+        <!-- AlpineJS plugins must be placed before the core alpineJS cdn -->
+        <script src="https://unpkg.com/htmx.org@latest/dist/ext/alpine-morph.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/persist@3.x.x/dist/cdn.min.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
         <meta name="htmx-config" content='{"useTemplateFragments":"true"}'>
-        <script src="https://unpkg.com/htmx.org@1.9.11/dist/ext/alpine-morph.js"></script>
         <script src="{% static 'js/base.js' %}"></script>
         {% block css %}
             {% tailwind_css %}
@@ -131,11 +133,8 @@
         {% endblock nav %}
         <!-- ========== MAIN CONTENT AREA ========== -->
         <main class="md:ml-60 min-h-screen p-4 overflow-y-auto flex justify-center w-full">
-            <!-- Main Content Container -->
-            <div class="max-w-7xl">
-                {% block content %}
-                {% endblock content %}
-            </div>
+            {% block content %}
+            {% endblock content %}
         </main>
         {% block javascript %}
             <script>
