@@ -1,0 +1,16 @@
+{% load hx_tags %}
+
+<div id="heart-container-{{ recognition.id }}" class="flex items-center gap-1">
+    <button
+        {% hx_post "toggle_heart" object=recognition hearted=recognition.hearted_by_user %}
+        hx-target="#heart-container-{{ recognition.id }}"
+        hx-swap="outerHTML"
+        class="flex items-center gap-1 text-red-500 hover:text-red-600">
+            {% if recognition.hearted_by_user %}
+                <i class="fa-solid fa-heart"></i>
+            {% else %}
+                <i class="fa-regular fa-heart"></i>
+            {% endif %}
+    </button>
+    <span class="text-gray-500">{{ recognition.hearts.count }}</span>
+</div>

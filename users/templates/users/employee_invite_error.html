@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container bg-white p-5 rounded-xl justify-center text-center text-lg">
+        <i class="fa-solid fa-triangle-exclamation text-yellow-400 text-9xl"></i>
+        <div class="font-semibold">Oops..</div>
+        <div class="pb-3">{{ message|linebreaks }}</div>
+        <a href="{% url 'users:login' %}" class="py-2 px-3 mt-5 rounded-xl bg-blue-500 text-white">Go to Login</a>
+    </div>
+{% endblock content %}
