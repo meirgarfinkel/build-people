@@ -14,17 +14,6 @@ module.exports = {
         require("@tailwindcss/forms"),
         require("@tailwindcss/typography"),
         require("@tailwindcss/aspect-ratio"),
-        function ({ addUtilities }) {
-            addUtilities({
-                ".scrollbar-hide": {
-                    "scrollbar-width": "none",  /* Firefox */
-                    "-ms-overflow-style": "none", /* IE/Edge */
-                },
-                ".scrollbar-hide::-webkit-scrollbar": {
-                    display: "none", /* Chrome/Safari */
-                },
-            });
-        },
     ],
     output: path.join(__dirname, "theme/static/css/dist/styles.css"),
 }

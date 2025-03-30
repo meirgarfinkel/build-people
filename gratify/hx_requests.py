@@ -63,8 +63,27 @@ class ToggleHeart(BaseHxRequest):
         recognition.refresh_from_db()
         recognition.hearted_by_user = recognition.hearts.filter(id=user.id).exists()
 
+        context.update({"recognition": recognition})
+        return context
+
+
+class AddComment(BaseHxRequest):
+    name = "add_comment"
+    POST_template = "gratify/partials/gratitude.html"
+    
+    def get_context_on_POST(self, **kwargs):
+        context = super().get_context_on_POST(**kwargs)
+        recognition = self.hx_object
+        user = self.request.user
+
+        comment_text = self.request.POST.get("content")
+
+        if comment_text:
+            recognition.comments.create(user=user, content=comment_text)
+            recognition.refresh_from_db()
+
         context.update({
             "recognition": recognition,
-            "user": user,
+            "open": True,
         })
         return context

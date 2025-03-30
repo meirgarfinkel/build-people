@@ -1,10 +1,13 @@
 {% extends "base.html" %}
+
 {% load hx_tags %}
+
 {% block title %}
     Employee Subscription
 {% endblock title %}
+
 {% block content %}
-    <div class="flex justify-center bg-gray-100">
+    <div class="flex justify-center bg-gray-100 w-full">
         <div class="w-full max-w-md justify-center rounded-xl bg-white p-6 shadow-lg">
             <h2 class="flex items-center gap-2 text-lg font-semibold">
                 <span>👥</span> Add Your Employees (Optional)
@@ -19,24 +22,27 @@
                        type="email"
                        class="flex-1 rounded-lg border px-3 py-2 text-gray-700 focus:outline-blue-500"
                        placeholder="employee@company.com" />
-                <div
-                    {% hx_get 'add_employee'%}
-                    hx-target="#employee-list"
-                    hx-include="#email-input, #employee-list-input"
-                    hx-swap="outerHTML"
-                    hx-on::after-request="document.getElementById('email-input').value = ''"
-                    class=" cursor-pointer rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">Add</div>
+                <div {% hx_get "add_employee" %}
+                     hx-target="#employee-list"
+                     hx-include="#email-input, #employee-list-input"
+                     hx-swap="outerHTML"
+                     hx-on::after-request="document.getElementById('email-input').value = ''"
+                     class="cursor-pointer rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+                    Add
+                </div>
             </div>
 
             {% block new_employee_emails %}
                 <div id="employee-list" class="mt-4 space-y-2 rounded-lg bg-gray-100 p-3">
                     <!-- Hidden input to store emails as a comma-separated list -->
-                    <input type="hidden" id="employee-list-input" name="employee_list"
-                        value="{% for email in new_emails %}{{ email }}{% if not forloop.last %},{% endif %}{% endfor %}">
-                
-                    {% for email in new_emails %}
-                        <div>{{ email }}</div>
-                    {% endfor %}
+                    <input type="hidden"
+                           id="employee-list-input"
+                           name="employee_list"
+                           value="{% for email in new_emails %}
+                                      {{ email }}
+                                      {% if not forloop.last %},{% endif %}
+                                  {% endfor %}">
+                    {% for email in new_emails %}<div>{{ email }}</div>{% endfor %}
                 </div>
             {% endblock new_employee_emails %}
 
@@ -45,9 +51,7 @@
                 <h3 class="mt-6 text-lg font-semibold">Subscribed Employees</h3>
                 <div id="subscribed-employee-list"
                      class="mt-2 space-y-2 rounded-lg bg-gray-100 p-3">
-                    {% for employee in subscribed_employees %}
-                        <div>{{ employee.email }}</div>
-                    {% endfor %}
+                    {% for employee in subscribed_employees %}<div>{{ employee.email }}</div>{% endfor %}
                 </div>
             {% endif %}
             <div class="mt-4 text-sm"></div>
@@ -56,11 +60,12 @@
                    class="block w-1/2 rounded-lg border bg-gray-100 px-4 py-2 text-center text-gray-600 hover:bg-gray-200">
                     Skip for Now
                 </a>
-                <button
-                    type="submit"
-                    {% hx_post 'send_employee_invites'%}
-                    hx-include="#employee-list-input"
-                    class="w-1/2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">Subscribe Now</button>
+                <button type="submit"
+                        {% hx_post "send_employee_invites" %}
+                        hx-include="#employee-list-input"
+                        class="w-1/2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+                    Subscribe Now
+                </button>
             </div>
         </div>
     </div>

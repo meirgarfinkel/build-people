@@ -14,7 +14,7 @@ class HomeView(LoginRequiredMixin, HtmxViewMixin, ListView):
 
     def get_queryset(self):
         user = self.request.user
-        hearts_qs = Recognition.objects.filter(id=OuterRef('pk'), hearts=user)
+        hearts_qs = Recognition.objects.filter(id=OuterRef("pk"), hearts=user)
 
         return (
             Recognition.objects.all()

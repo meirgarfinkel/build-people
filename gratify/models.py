@@ -61,4 +61,4 @@ class RecognitionComment(TimestampedModelMixin):
         return f"Comment by {self.user} on {self.recognition}"
     
     class Meta:
-        ordering = ['created_at']
+        ordering = ["-created_at"]

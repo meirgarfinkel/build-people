@@ -8,39 +8,39 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('gratify', '0002_initial'),
+        ("gratify", "0002_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Recognition',
+            name="Recognition",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, null=True)),
-                ('updated_at', models.DateTimeField(auto_now=True, null=True)),
-                ('message', models.TextField()),
-                ('points', models.PositiveIntegerField()),
-                ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='recognitions', to=settings.AUTH_USER_MODEL)),
-                ('hearts', models.ManyToManyField(blank=True, help_text='Users who liked this recognition', related_name='hearted_recognitions', to=settings.AUTH_USER_MODEL)),
-                ('receiver', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='received_recognitions', to=settings.AUTH_USER_MODEL)),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("created_at", models.DateTimeField(auto_now_add=True, null=True)),
+                ("updated_at", models.DateTimeField(auto_now=True, null=True)),
+                ("message", models.TextField()),
+                ("points", models.PositiveIntegerField()),
+                ("created_by", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="recognitions", to=settings.AUTH_USER_MODEL)),
+                ("hearts", models.ManyToManyField(blank=True, help_text="Users who liked this recognition", related_name="hearted_recognitions", to=settings.AUTH_USER_MODEL)),
+                ("receiver", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="received_recognitions", to=settings.AUTH_USER_MODEL)),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='RecognitionComment',
+            name="RecognitionComment",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, null=True)),
-                ('updated_at', models.DateTimeField(auto_now=True, null=True)),
-                ('content', models.TextField(help_text='Comment content')),
-                ('recognition', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='comments', to='gratify.recognition')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("created_at", models.DateTimeField(auto_now_add=True, null=True)),
+                ("updated_at", models.DateTimeField(auto_now=True, null=True)),
+                ("content", models.TextField(help_text="Comment content")),
+                ("recognition", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="comments", to="gratify.recognition")),
+                ("user", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
             options={
-                'ordering': ['created_at'],
+                "ordering": ["created_at"],
             },
         ),
     ]
