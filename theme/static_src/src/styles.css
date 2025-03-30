@@ -1,3 +1,33 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+    /* Hide scrollbar */
+    .scrollbar-hide {
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
+    }
+
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+
+    .scrollbar::-webkit-scrollbar {
+        width: 7px;
+        height: 15px;
+    }
+  
+    .scrollbar::-webkit-scrollbar-track {
+        background: #ffffff;
+    }
+  
+    .scrollbar::-webkit-scrollbar-thumb {
+        background: #cccccc;
+        border-radius: 100vh;
+    }
+  
+    .scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #999999;
+    }
+}

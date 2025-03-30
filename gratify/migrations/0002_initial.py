@@ -10,19 +10,19 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('gratify', '0001_initial'),
+        ("gratify", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='company',
-            name='owner',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='companies', to=settings.AUTH_USER_MODEL),
+            model_name="company",
+            name="owner",
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="companies", to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
-            model_name='employeeinvite',
-            name='company',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='invites', to='gratify.company'),
+            model_name="employeeinvite",
+            name="company",
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="invites", to="gratify.company"),
         ),
     ]

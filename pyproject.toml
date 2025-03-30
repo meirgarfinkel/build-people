@@ -21,3 +21,44 @@ dev = [
   "ruff>=0.11.2",
   "typing_extensions ~=4.12",
 ]
+
+[tool.djlint]
+profile = "django"
+reformat = true
+max_line_length = 105
+preserve_blank_lines = false
+attr_sort = true
+quote_convert = "double"
+blank_line_before_tag = "block"
+blank_line_after_tag = "endblock, extends"
+format_attribute_template_tags = true
+preserve_leading_space = false
+
+[tool.ruff]
+line-length = 105
+indent-width = 4
+exclude = [
+  ".git",
+  ".pytest_cache",
+  ".ruff_cache",
+  ".venv",
+  ".vscode",
+  "__pypackages__",
+  "_build",
+  "build",
+  "dist",
+  "node_modules",
+  "site-packages",
+  "venv",
+]
+
+[tool.ruff.lint]
+extend-select = ["Q"]
+
+[tool.ruff.format]
+quote-style = "double"
+docstring-code-format = true
+exclude = [
+  "users/migrations/**",
+  "gratify/migrations/**",
+]
