@@ -1,0 +1,30 @@
+{% load hx_tags %}
+
+<div id="recognition-form-container">
+    <h3 class="text-xl font-semibold mb-4">Give Recognition</h3>
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div>
+            <label class="block text-gray-700 font-medium">Receiver:</label>
+            {{ form.receiver }}
+            {{ form.receiver.errors }}
+        </div>
+        <div>
+            <label class="block text-gray-700 font-medium">Message:</label>
+            {{ form.message }}
+            {{ form.message.errors }}
+        </div>
+        <div>
+            <label class="block text-gray-700 font-medium">Points:</label>
+            {{ form.points }}
+            {{ form.points.errors }}
+        </div>
+        <button type="submit"
+                {% hx_post "create_recognition" %}
+                hx-target="#recognitions-list"
+                hx-swap="beforebegin"
+                class="w-full bg-blue-500 text-white py-2 rounded-xl hover:bg-blue-600">
+            Send Recognition
+        </button>
+    </form>
+</div>

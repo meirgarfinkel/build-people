@@ -2,7 +2,7 @@ from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.contrib.auth.views import LoginView as DjangoLoginView
 from django.views import View
-from gratify.models import Company, EmployeeInvite
+from gratify.models import EmployeeInvite
 from users.forms import EmailAuthenticationForm, EmployeeSignupForm, EmployerSignupForm
 from django.contrib.auth import login, logout
 from django.views.generic.edit import FormView
@@ -16,17 +16,9 @@ class EmployerSignupView(FormView):
     success_url = reverse_lazy("gratify:home")
 
     def form_valid(self, form):
-        # Create the user.
         user = form.save(commit=False)
         user.username = form.cleaned_data.get("username")
-        user.role = form.cleaned_data.get("role")
         user.save()
-        # Create the Company using the company_name field.
-        company_name = form.cleaned_data.get("company_name")
-        company = Company.objects.create(name=company_name, owner=user)
-        user.company = company
-        user.save()
-        login(self.request, user)
         return super().form_valid(form)
 
 
@@ -63,8 +55,7 @@ class EmployeeSignupView(FormView):
         user.company = self.invite.company
         user.save()
 
-        self.invite.used = True
-        self.invite.save()
+        self.invite.delete()
 
         login(self.request, user)
         return super().form_valid(form)
