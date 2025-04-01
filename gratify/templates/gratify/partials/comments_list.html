@@ -1,0 +1,26 @@
+<div x-show="open"
+     class="mt-3 border border-gray-300 rounded-xl p-2 pr-1"
+     id="comments-list-{{ recognition.id }}">
+    <div class="max-h-60 overflow-y-auto pr-2 scrollbar">
+        {% if recognition.comments.count > 0 %}
+            <p class="text-sm text-gray-500 mb-2 text-center">Comments:</p>
+        {% endif %}
+        {% for comment in recognition.comments.all %}
+            <div id="comment-{{ comment.id }}">
+                <p>{{ comment.content }}</p>
+                <p class="text-sm text-gray-500">- {{ comment.user }}</p>
+                <!-- Separator for inbetween comments -->
+                {% if not forloop.last %}<div class="border-t border-gray-300 my-2"></div>{% endif %}
+            </div>
+        {% empty %}
+            <p class="text-sm text-gray-500">No comments yet, be the first!</p>
+        {% endfor %}
+    </div>
+</div>
+<script>
+    // Ensure the value of `open` is passed into AlpineJS from the backend response
+    document.addEventListener('htmx:afterSwap', (event) => {
+        const open = event.target.getAttribute('x-show') === 'true';
+        Alpine.store('comments', { open });
+    });
+</script>

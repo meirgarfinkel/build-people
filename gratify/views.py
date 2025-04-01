@@ -1,3 +1,4 @@
+from django.views import View
 from django.views.generic import TemplateView, ListView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from hx_requests.views import HtmxViewMixin
@@ -5,6 +6,7 @@ from django.db.models import OuterRef, Exists
 from urllib.parse import unquote
 
 from gratify.models import Recognition
+from users.models import User
 
 
 class HomeView(LoginRequiredMixin, HtmxViewMixin, ListView):
@@ -19,8 +21,7 @@ class HomeView(LoginRequiredMixin, HtmxViewMixin, ListView):
         return (
             Recognition.objects.all()
             .annotate(hearted_by_user=Exists(hearts_qs))
-            .prefetch_related("hearts")
-            .prefetch_related("comments")
+            .prefetch_related("hearts", "comments")
         )
 
 
@@ -38,3 +39,7 @@ class PreviewView(LoginRequiredMixin, TemplateView):
 
 class SubscriptionsView(HtmxViewMixin, LoginRequiredMixin, TemplateView):
     template_name = "gratify/subscriptions.html"
+
+
+class ProfileView(HtmxViewMixin, LoginRequiredMixin, TemplateView):
+    template_name = "gratify/profile.html"

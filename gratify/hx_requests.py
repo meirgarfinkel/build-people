@@ -1,8 +1,11 @@
 from django.urls import reverse
-from hx_requests.hx_requests import BaseHxRequest
+from hx_requests.hx_requests import BaseHxRequest, FormHxRequest
 from django.core.mail import send_mail
-
+from django.contrib import messages
+from gratify.forms import CreateRecognitionForm
 from gratify.models import EmployeeInvite
+from users.forms import UpdateUserForm
+from django.utils.text import slugify
 
 
 class AddEmployeeEmail(BaseHxRequest):
@@ -11,7 +14,7 @@ class AddEmployeeEmail(BaseHxRequest):
 
     def get_context_data(self, **kwargs) -> dict:
         email = self.request.GET.get("email")  # New email
-        existing_emails = self.request.GET.get("employee_list", "").split(",")  # Previous emails
+        existing_emails = self.request.GET.get("employees_list", "").split(",")  # Previous emails
 
         # Remove empty strings and add the new email
         all_emails = list(dict.fromkeys([e.strip() for e in existing_emails if e] + ([email] if email else [])))
@@ -26,7 +29,7 @@ class SendEmployeeInvites(BaseHxRequest):
 
     def post(self, request, *args, **kwargs):
         company = request.user.company
-        email_list = self.request.POST.get("employee_list", "").split(",")
+        email_list = self.request.POST.get("employees_list", "").split(",")
 
         for email in email_list:
             self.create_and_send_invite(company, email)
@@ -69,7 +72,7 @@ class ToggleHeart(BaseHxRequest):
 
 class AddComment(BaseHxRequest):
     name = "add_comment"
-    POST_template = "gratify/partials/gratitude.html"
+    POST_template = "gratify/partials/recognitions_list.html"
     
     def get_context_on_POST(self, **kwargs):
         context = super().get_context_on_POST(**kwargs)
@@ -87,3 +90,64 @@ class AddComment(BaseHxRequest):
             "open": True,
         })
         return context
+
+
+class CreateRecognition(FormHxRequest):
+    name = "create_recognition"
+    form_class = CreateRecognitionForm
+    GET_template = "gratify/partials/recognition_form.html"
+    POST_template = "gratify/partials/recognition_form.html"
+
+    def form_valid(self, **kwargs) -> str:
+        recognition = self.form.save(commit=False)
+        recognition.created_by = self.request.user
+        recognition.save()
+        self.form.save_m2m()
+
+        messages.success(self.request, "Success!")
+
+        return self._get_response(
+            template="gratify/partials/recognition_card.html",
+            context={"recognition": recognition},
+            **kwargs
+        )
+
+    def form_invalid(self, **kwargs) -> str:
+        messages.error(self.request, "Failed to create recognition. Please correct the errors below.")
+        response = super().form_invalid(**kwargs)
+        response.headers["HX-Reswap"] = "innerHTML"
+        return response
+
+
+class UserForm(BaseHxRequest):
+    name = "user_form"
+    GET_template = "users/partials/user_form.html"
+    GET_block = "content"
+
+
+class UpdateUser(FormHxRequest):
+    name = "update_user"
+    form_class = UpdateUserForm
+    GET_template = "users/partials/user_form.html"
+    redirect = reverse("gratify:profile")
+
+    def form_valid(self, **kwargs) -> str:
+        user = self.request.user
+        cleaned_data = self.form.cleaned_data
+        # Only update fields that changed
+        user.first_name = cleaned_data["first_name"]
+        user.last_name = cleaned_data["last_name"]
+        user.email = cleaned_data["email"]
+
+        # Automatically update username
+        user.username = slugify(f"{user.first_name} {user.last_name}")
+        user.save(update_fields=["first_name", "last_name", "email", "username"])
+
+        messages.success(self.request, self.get_success_message(**kwargs))
+        return self._get_response(**kwargs)
+    
+    def form_invalid(self, **kwargs) -> str:
+        self.is_post_request = False
+        response = super().form_invalid(**kwargs)
+        response.headers["HX-Reswap"] = "innerHTML"
+        return response
