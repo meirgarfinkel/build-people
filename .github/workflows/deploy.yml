@@ -56,13 +56,20 @@ jobs:
           echo "IMAGE_VERSION=${IMAGE_VERSION}" >> $GITHUB_ENV
           docker build -t mgarfinkel/build-people:${IMAGE_VERSION} -f Dockerfile.prod .
           docker push mgarfinkel/build-people:${IMAGE_VERSION}
+      
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan 44.210.116.243 >> ~/.ssh/known_hosts
 
       # ======================
       # 5. SECURE DEPLOYMENT
       # ======================
       - name: Deploy with Zero Downtime
         run: |
-          ssh -o StrictHostKeyChecking=no -i ${{ secrets.SSH_PRIVATE_KEY }} ec2-user@44.210.116.243 << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@44.210.116.243 << 'EOF'
 
           # Fetch secrets directly (never stored)
           DB_HOST=$(aws ssm get-parameter --name "/build-people/DB_HOST" --with-decryption --query "Parameter.Value" --output text)
