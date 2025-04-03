@@ -4,23 +4,29 @@ on:
   push:
     branches: [main]
 
-env:
-  AWS_REGION: us-east-1
+# Critical permissions for private repos
+permissions:
+  actions: write
+  contents: read
+  id-token: write
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
     steps:
+      # Step 1: Checkout with authentication
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}  # Uses your PAT
+          fetch-depth: 0  # Required for proper version tagging
 
+      # Step 2: Configure AWS (OIDC)
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Get deployment parameters
         run: |
@@ -40,8 +46,8 @@ jobs:
 
       - name: Build and Push Image
         run: |
-          docker build -t your-dockerhub-username/build-people:${{ env.IMAGE_VERSION }} -f Dockerfile.prod .
-          docker push your-dockerhub-username/build-people:${{ env.IMAGE_VERSION }}
+          docker build -t mgarfinkel/build-people:${{ env.IMAGE_VERSION }} -f Dockerfile.prod .
+          docker push mgarfinkel/build-people:${{ env.IMAGE_VERSION }}
 
       - name: Deploy with Zero Downtime
         env:
@@ -61,13 +67,13 @@ jobs:
             -v $(pwd)/theme/static_src:/app/theme/static_src \
             -e DB_HOST=$DB_HOST \
             -e SECRET_KEY=$SECRET_KEY \
-            your-dockerhub-username/build-people:$IMAGE_VERSION \
+            mgarfinkel/build-people:$IMAGE_VERSION \
             sh -c "python manage.py tailwind build && python manage.py collectstatic --noinput --clear"
 
           # 3. Prepare new compose file
           cp docker-compose.prod.yml docker-compose.$IMAGE_VERSION.yml
           sed -i "s/static_volume:/$NEW_VOLUME:/" docker-compose.$IMAGE_VERSION.yml
-          sed -i "s/image:.*/image: your-dockerhub-username\/build-people:$IMAGE_VERSION/" docker-compose.$IMAGE_VERSION.yml
+          sed -i "s/image:.*/image: mgarfinkel\/build-people:$IMAGE_VERSION/" docker-compose.$IMAGE_VERSION.yml
 
           # 4. Deploy new stack
           DB_HOST=$DB_HOST \
