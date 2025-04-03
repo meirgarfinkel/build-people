@@ -165,8 +165,8 @@ jobs:
           IMAGE_VERSION: ${{ env.IMAGE_VERSION }}
           CODEDEPLOY_APPLICATION_NAME: ${{ secrets.CODEDEPLOY_APPLICATION_NAME }}
           CODEDEPLOY_DEPLOYMENT_GROUP_NAME: ${{ secrets.CODEDEPLOY_DEPLOYMENT_GROUP_NAME }}
-          GITHUB_REPO: ${{ github.repository }}  # Explicitly pass repository
-          GITHUB_COMMIT_SHA: ${{ github.sha }}   # Explicitly pass commit SHA
+          GITHUB_REPO: ${{ github.repository }}
+          GITHUB_COMMIT_SHA: ${{ github.sha }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
           python - <<EOF
@@ -181,8 +181,8 @@ jobs:
               revision={
                   'revisionType': 'GitHub',
                   'gitHubLocation': {
-                      'repository': os.getenv('GITHUB_REPO'),  # Use the passed variable
-                      'commitId': os.getenv('GITHUB_COMMIT_SHA')  # Use the passed variable
+                      'repository': os.getenv('GITHUB_REPO'),
+                      'commitId': os.getenv('GITHUB_COMMIT_SHA')
                   }
               },
               description=f'Deployment for image version {os.getenv("IMAGE_VERSION")}'
