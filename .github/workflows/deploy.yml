@@ -57,10 +57,10 @@ jobs:
           docker build -t mgarfinkel/build-people:${IMAGE_VERSION} -f Dockerfile.prod .
           docker push mgarfinkel/build-people:${IMAGE_VERSION}
       
-      - name: Setup SSH Key
+      - name: Setup SSH (Base64 method)
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 -d > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan 44.210.116.243 >> ~/.ssh/known_hosts
 
