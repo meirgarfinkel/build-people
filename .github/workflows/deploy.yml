@@ -1,0 +1,101 @@
+name: Zero-Downtime Deployment
+
+on:
+  push:
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get deployment parameters
+        run: |
+          DB_HOST=$(aws ssm get-parameter --name "/build-people/DB_HOST" --with-decryption --query "Parameter.Value" --output text)
+          DB_PASSWORD=$(aws ssm get-parameter --name "/build-people/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text)
+          SECRET_KEY=$(aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text)
+          echo "DB_HOST=$DB_HOST" >> $GITHUB_ENV
+          echo "DB_PASSWORD=$DB_PASSWORD" >> $GITHUB_ENV
+          echo "SECRET_KEY=$SECRET_KEY" >> $GITHUB_ENV
+          echo "IMAGE_VERSION=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+
+      - name: Docker Hub Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Image
+        run: |
+          docker build -t your-dockerhub-username/build-people:${{ env.IMAGE_VERSION }} -f Dockerfile.prod .
+          docker push your-dockerhub-username/build-people:${{ env.IMAGE_VERSION }}
+
+      - name: Deploy with Zero Downtime
+        env:
+          DB_HOST: ${{ env.DB_HOST }}
+          DB_PASSWORD: ${{ env.DB_PASSWORD }}
+          SECRET_KEY: ${{ env.SECRET_KEY }}
+          IMAGE_VERSION: ${{ env.IMAGE_VERSION }}
+        run: |
+          ssh -i ${{ secrets.SSH_PRIVATE_KEY }} ec2-user@44.210.116.243 << 'EOF'
+          # Create versioned volume
+          NEW_VOLUME="static_$IMAGE_VERSION"
+          docker volume create $NEW_VOLUME
+
+          # 1. Build Tailwind and collectstatic
+          docker run --rm \
+            -v $NEW_VOLUME:/app/staticfiles \
+            -v $(pwd)/theme/static_src:/app/theme/static_src \
+            -e DB_HOST=$DB_HOST \
+            -e SECRET_KEY=$SECRET_KEY \
+            your-dockerhub-username/build-people:$IMAGE_VERSION \
+            sh -c "python manage.py tailwind build && python manage.py collectstatic --noinput --clear"
+
+          # 3. Prepare new compose file
+          cp docker-compose.prod.yml docker-compose.$IMAGE_VERSION.yml
+          sed -i "s/static_volume:/$NEW_VOLUME:/" docker-compose.$IMAGE_VERSION.yml
+          sed -i "s/image:.*/image: your-dockerhub-username\/build-people:$IMAGE_VERSION/" docker-compose.$IMAGE_VERSION.yml
+
+          # 4. Deploy new stack
+          DB_HOST=$DB_HOST \
+          DB_PASSWORD=$DB_PASSWORD \
+          SECRET_KEY=$SECRET_KEY \
+          docker compose -f docker-compose.$IMAGE_VERSION.yml up -d
+
+          # 5. Run migrations
+          docker compose -f docker-compose.$IMAGE_VERSION.yml exec web \
+            python manage.py migrate --noinput
+
+          # 6. Verify health (30 second timeout)
+          for i in {1..6}; do
+            if docker compose -f docker-compose.$IMAGE_VERSION.yml ps web | grep healthy; then
+              echo "Deployment successful!"
+              
+              # Cleanup old volumes (keep last 2)
+              docker volume ls -q --filter name=static_ | sort -r | tail -n +3 | xargs -r docker volume rm
+              
+              # Update symlink to current compose file
+              ln -sf docker-compose.$IMAGE_VERSION.yml docker-compose.current.yml
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "Deployment failed - initiating rollback"
+          docker compose -f docker-compose.current.yml up -d
+          docker volume rm $NEW_VOLUME
+          exit 1
+          EOF
