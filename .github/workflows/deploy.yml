@@ -1,10 +1,9 @@
-name: Zero-Downtime Deployment
+name: Zero-Downtime Deployment with CodeDeploy
 
 on:
   push:
     branches: [main]
 
-# Critical permissions for private repos
 permissions:
   actions: write
   contents: read
@@ -56,33 +55,60 @@ jobs:
           echo "IMAGE_VERSION=${IMAGE_VERSION}" >> $GITHUB_ENV
           docker build -t mgarfinkel/build-people:${IMAGE_VERSION} -f Dockerfile.prod .
           docker push mgarfinkel/build-people:${IMAGE_VERSION}
-      
-      - name: Setup SSH (Base64 method)
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 -d > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan 44.210.116.243 >> ~/.ssh/known_hosts
 
       # ======================
-      # 5. SECURE DEPLOYMENT
+      # 5. CODE DEPLOY SETUP
       # ======================
-      - name: Deploy with Zero Downtime
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@44.210.116.243 << 'EOF'
+      - name: Install Python dependencies
+        run: pip install boto3
 
-          # Fetch secrets directly (never stored)
+      - name: Generate deployment scripts
+        run: |
+          # Create appspec.yml
+          cat > appspec.yml <<EOL
+          version: 0.0
+          os: linux
+          files:
+            - source: scripts
+              destination: /home/ec2-user/deployment_scripts
+          hooks:
+            BeforeInstall:
+              - location: scripts/before_install.sh
+                timeout: 300
+                runas: root
+            AfterInstall:
+              - location: scripts/after_install.sh
+                timeout: 300
+                runas: root
+          EOL
+
+          # Create deployment scripts
+          mkdir -p scripts
+          cat > scripts/before_install.sh <<'EOL'
+          #!/bin/bash
+          # Fetch secrets from SSM
           DB_HOST=$(aws ssm get-parameter --name "/build-people/DB_HOST" --with-decryption --query "Parameter.Value" --output text)
           DB_PASSWORD=$(aws ssm get-parameter --name "/build-people/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text)
           SECRET_KEY=$(aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text)
-          IMAGE_VERSION=${{ env.IMAGE_VERSION }}
+          
+          # Export for use in after_install
+          echo "export DB_HOST=${DB_HOST}" > /tmp/deployment_secrets
+          echo "export DB_PASSWORD=${DB_PASSWORD}" >> /tmp/deployment_secrets
+          echo "export SECRET_KEY=${SECRET_KEY}" >> /tmp/deployment_secrets
+          echo "export IMAGE_VERSION=${IMAGE_VERSION}" >> /tmp/deployment_secrets
+          EOL
 
+          cat > scripts/after_install.sh <<'EOL'
+          #!/bin/bash
+          # Load secrets
+          source /tmp/deployment_secrets
+          
           # Create versioned resources
           NEW_VOLUME="static_${IMAGE_VERSION}"
           NEW_COMPOSE="docker-compose.${IMAGE_VERSION}.yml"
           docker volume create ${NEW_VOLUME}
 
-          # 1. Build assets with direct secret injection
+          # Build assets with secret injection
           docker run --rm \
             -v ${NEW_VOLUME}:/app/staticfiles \
             -v $(pwd)/theme/static_src:/app/theme/static_src \
@@ -91,22 +117,22 @@ jobs:
             mgarfinkel/build-people:${IMAGE_VERSION} \
             sh -c "python manage.py tailwind build && python manage.py collectstatic --noinput --clear"
 
-          # 2. Prepare deployment
+          # Prepare deployment
           cp docker-compose.prod.yml ${NEW_COMPOSE}
           sed -i "s/static_volume:/${NEW_VOLUME}:/" ${NEW_COMPOSE}
           sed -i "s/image:.*/image: mgarfinkel\/build-people:${IMAGE_VERSION}/" ${NEW_COMPOSE}
 
-          # 3. Deploy with secrets in memory only
+          # Deploy with secrets
           DB_HOST="${DB_HOST}" \
           DB_PASSWORD="${DB_PASSWORD}" \
           SECRET_KEY="${SECRET_KEY}" \
           docker compose -f ${NEW_COMPOSE} up -d
 
-          # 4. Run migrations
+          # Run migrations
           docker compose -f ${NEW_COMPOSE} exec -T web \
             python manage.py migrate --noinput
 
-          # 5. Health check with timeout
+          # Health check
           for i in {1..6}; do
             if docker compose -f ${NEW_COMPOSE} ps web | grep healthy; then
               echo "Deployment successful!"
@@ -121,10 +147,40 @@ jobs:
             sleep 5
           done
 
-          # 6. Rollback procedure
+          # Rollback procedure
           echo "Deployment failed - initiating rollback"
           docker compose -f docker-compose.current.yml up -d
           docker volume rm ${NEW_VOLUME}
           rm ${NEW_COMPOSE}
           exit 1
+          EOL
+
+          chmod +x scripts/*.sh
+
+      # ======================
+      # 6. TRIGGER DEPLOYMENT
+      # ======================
+      - name: Trigger CodeDeploy
+        env:
+          IMAGE_VERSION: ${{ env.IMAGE_VERSION }}
+        run: |
+          python - <<EOF
+          import boto3
+          import os
+
+          client = boto3.client('codedeploy', region_name=os.getenv('AWS_REGION'))
+
+          response = client.create_deployment(
+              applicationName=os.getenv('CODEDEPLOY_APPLICATION_NAME'),
+              deploymentGroupName=os.getenv('CODEDEPLOY_DEPLOYMENT_GROUP_NAME'),
+              revision={
+                  'revisionType': 'GitHub',
+                  'gitHubLocation': {
+                      'repository': os.getenv('GITHUB_REPOSITORY'),
+                      'commitId': os.getenv('GITHUB_SHA')
+                  }
+              },
+              description=f'Deployment for image version {os.getenv("IMAGE_VERSION")}'
+          )
+          print(f"Deployment started: {response['deploymentId']}")
           EOF
