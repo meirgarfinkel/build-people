@@ -1,31 +1,43 @@
 {
-    "name": "gratify-2",
+    "name": "Build People Dev",
     "dockerComposeFile": [
         "../docker-compose.yml",
         "docker-compose.override.yml"
     ],
     "service": "web",
     "workspaceFolder": "/app",
-    "forwardPorts": [8000],
+    "shutdownAction": "stopCompose",
+    // "forwardPorts": [8000],
+    "remoteUser": "docker",
+    "containerUser": "docker",
 
     "customizations": {
         "vscode": {
             "settings": {
-                "terminal.integrated.defaultProfile.linux": "bash",
                 "terminal.integrated.shell.linux": "/bin/bash",
-                "python.defaultInterpreterPath": "/app/.venv/bin/python"
+                "python.defaultInterpreterPath": "/app/.venv/bin/python",
+                "python.linting.pylintEnabled": true,
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "editor.formatOnSave": true
             },
             "extensions": [
                 "ms-python.python",
                 "ms-python.vscode-pylance",
-                "ms-python.debugpy",
+                // "ms-python.debugpy",
                 "ms-azuretools.vscode-docker",
                 "bradlc.vscode-tailwindcss",
-                "batisteo.vscode-django"
+                "batisteo.vscode-django",
+                "heybourn.headwind"
             ]
         }
     },
-    "remoteUser": "docker",
+
+    "forwardPorts": [
+        8000,
+        5432,
+        8025,
+        5050
+    ],
     "mounts": [
         "source=${localEnv:HOME}/.ssh,target=/home/docker/.ssh,type=bind,consistency=cached"
     ],
