@@ -2,15 +2,24 @@ version: '3.8'
 
 services:
   web:
-    image: your-dockerhub-username/build-people:${IMAGE_VERSION}
+    image: mgarfinkel/build-people:${IMAGE_VERSION}
     environment:
       - DB_HOST=${DB_HOST}
       - SECRET_KEY=${SECRET_KEY}
     volumes:
-      - static_${IMAGE_VERSION}:/app/staticfiles  # Versioned volume
+      - static_${IMAGE_VERSION}:/app/staticfiles
+      - ./theme/static_src:/app/theme/static_src
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
       timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1GB
 
   nginx:
     image: nginx:alpine
@@ -18,10 +27,11 @@ services:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
-      - static_${IMAGE_VERSION}:/var/www/static  # Same versioned volume
+      - static_${IMAGE_VERSION}:/var/www/static
     depends_on:
       web:
         condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   static_${IMAGE_VERSION}:  # Dynamically named volume
