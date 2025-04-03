@@ -14,7 +14,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy dependency specs
-COPY pyproject.toml uv.lock ./
+COPY pyproject.toml ./
 
 # Install with UV cache
 RUN --mount=type=cache,target=/app/.cache/uv \
