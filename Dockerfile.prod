@@ -2,7 +2,7 @@
 FROM node:20-bookworm-slim as tailwind-builder
 WORKDIR /app
 COPY theme/static_src/package.json theme/static_src/package-lock.json ./theme/static_src/
-RUN cd theme && npm ci --omit=dev
+RUN cd theme/static_src && npm ci --omit=dev
 
 # Stage 2: Python environment builder
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim as python-builder
