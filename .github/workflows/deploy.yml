@@ -14,30 +14,36 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout with authentication
+      # ======================
+      # 1. REPOSITORY SETUP
+      # ======================
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.REPO_ACCESS_TOKEN }}  # Uses your PAT
-          fetch-depth: 0  # Required for proper version tagging
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          fetch-depth: 0
 
-      # Step 2: Configure AWS (OIDC)
+      # ======================
+      # 2. AWS AUTHENTICATION
+      # ======================
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Get deployment parameters
+      # ======================
+      # 3. SECRET MASKING
+      # ======================
+      - name: Mask AWS secrets in logs
         run: |
-          DB_HOST=$(aws ssm get-parameter --name "/build-people/DB_HOST" --with-decryption --query "Parameter.Value" --output text)
-          DB_PASSWORD=$(aws ssm get-parameter --name "/build-people/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text)
-          SECRET_KEY=$(aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text)
-          echo "DB_HOST=$DB_HOST" >> $GITHUB_ENV
-          echo "DB_PASSWORD=$DB_PASSWORD" >> $GITHUB_ENV
-          echo "SECRET_KEY=$SECRET_KEY" >> $GITHUB_ENV
-          echo "IMAGE_VERSION=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+          echo "::add-mask::$(aws ssm get-parameter --name "/build-people/DB_HOST" --with-decryption --query "Parameter.Value" --output text)"
+          echo "::add-mask::$(aws ssm get-parameter --name "/build-people/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text)"
+          echo "::add-mask::$(aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text)"
 
+      # ======================
+      # 4. IMAGE BUILD
+      # ======================
       - name: Docker Hub Login
         uses: docker/login-action@v3
         with:
@@ -46,62 +52,72 @@ jobs:
 
       - name: Build and Push Image
         run: |
-          docker build -t mgarfinkel/build-people:${{ env.IMAGE_VERSION }} -f Dockerfile.prod .
-          docker push mgarfinkel/build-people:${{ env.IMAGE_VERSION }}
+          IMAGE_VERSION=$(date +%Y%m%d%H%M%S)
+          echo "IMAGE_VERSION=${IMAGE_VERSION}" >> $GITHUB_ENV
+          docker build -t mgarfinkel/build-people:${IMAGE_VERSION} -f Dockerfile.prod .
+          docker push mgarfinkel/build-people:${IMAGE_VERSION}
 
+      # ======================
+      # 5. SECURE DEPLOYMENT
+      # ======================
       - name: Deploy with Zero Downtime
-        env:
-          DB_HOST: ${{ env.DB_HOST }}
-          DB_PASSWORD: ${{ env.DB_PASSWORD }}
-          SECRET_KEY: ${{ env.SECRET_KEY }}
-          IMAGE_VERSION: ${{ env.IMAGE_VERSION }}
         run: |
-          ssh -i ${{ secrets.SSH_PRIVATE_KEY }} ec2-user@44.210.116.243 << 'EOF'
-          # Create versioned volume
-          NEW_VOLUME="static_$IMAGE_VERSION"
-          docker volume create $NEW_VOLUME
+          ssh -o StrictHostKeyChecking=no -i ${{ secrets.SSH_PRIVATE_KEY }} ec2-user@44.210.116.243 << 'EOF'
 
-          # 1. Build Tailwind and collectstatic
+          # Fetch secrets directly (never stored)
+          DB_HOST=$(aws ssm get-parameter --name "/build-people/DB_HOST" --with-decryption --query "Parameter.Value" --output text)
+          DB_PASSWORD=$(aws ssm get-parameter --name "/build-people/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text)
+          SECRET_KEY=$(aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text)
+          IMAGE_VERSION=${{ env.IMAGE_VERSION }}
+
+          # Create versioned resources
+          NEW_VOLUME="static_${IMAGE_VERSION}"
+          NEW_COMPOSE="docker-compose.${IMAGE_VERSION}.yml"
+          docker volume create ${NEW_VOLUME}
+
+          # 1. Build assets with direct secret injection
           docker run --rm \
-            -v $NEW_VOLUME:/app/staticfiles \
+            -v ${NEW_VOLUME}:/app/staticfiles \
             -v $(pwd)/theme/static_src:/app/theme/static_src \
-            -e DB_HOST=$DB_HOST \
-            -e SECRET_KEY=$SECRET_KEY \
-            mgarfinkel/build-people:$IMAGE_VERSION \
+            -e DB_HOST="${DB_HOST}" \
+            -e SECRET_KEY="${SECRET_KEY}" \
+            mgarfinkel/build-people:${IMAGE_VERSION} \
             sh -c "python manage.py tailwind build && python manage.py collectstatic --noinput --clear"
 
-          # 3. Prepare new compose file
-          cp docker-compose.prod.yml docker-compose.$IMAGE_VERSION.yml
-          sed -i "s/static_volume:/$NEW_VOLUME:/" docker-compose.$IMAGE_VERSION.yml
-          sed -i "s/image:.*/image: mgarfinkel\/build-people:$IMAGE_VERSION/" docker-compose.$IMAGE_VERSION.yml
+          # 2. Prepare deployment
+          cp docker-compose.prod.yml ${NEW_COMPOSE}
+          sed -i "s/static_volume:/${NEW_VOLUME}:/" ${NEW_COMPOSE}
+          sed -i "s/image:.*/image: mgarfinkel\/build-people:${IMAGE_VERSION}/" ${NEW_COMPOSE}
 
-          # 4. Deploy new stack
-          DB_HOST=$DB_HOST \
-          DB_PASSWORD=$DB_PASSWORD \
-          SECRET_KEY=$SECRET_KEY \
-          docker compose -f docker-compose.$IMAGE_VERSION.yml up -d
+          # 3. Deploy with secrets in memory only
+          DB_HOST="${DB_HOST}" \
+          DB_PASSWORD="${DB_PASSWORD}" \
+          SECRET_KEY="${SECRET_KEY}" \
+          docker compose -f ${NEW_COMPOSE} up -d
 
-          # 5. Run migrations
-          docker compose -f docker-compose.$IMAGE_VERSION.yml exec web \
+          # 4. Run migrations
+          docker compose -f ${NEW_COMPOSE} exec -T web \
             python manage.py migrate --noinput
 
-          # 6. Verify health (30 second timeout)
+          # 5. Health check with timeout
           for i in {1..6}; do
-            if docker compose -f docker-compose.$IMAGE_VERSION.yml ps web | grep healthy; then
+            if docker compose -f ${NEW_COMPOSE} ps web | grep healthy; then
               echo "Deployment successful!"
               
               # Cleanup old volumes (keep last 2)
               docker volume ls -q --filter name=static_ | sort -r | tail -n +3 | xargs -r docker volume rm
               
-              # Update symlink to current compose file
-              ln -sf docker-compose.$IMAGE_VERSION.yml docker-compose.current.yml
+              # Update symlink
+              ln -sf ${NEW_COMPOSE} docker-compose.current.yml
               exit 0
             fi
             sleep 5
           done
 
+          # 6. Rollback procedure
           echo "Deployment failed - initiating rollback"
           docker compose -f docker-compose.current.yml up -d
-          docker volume rm $NEW_VOLUME
+          docker volume rm ${NEW_VOLUME}
+          rm ${NEW_COMPOSE}
           exit 1
           EOF
