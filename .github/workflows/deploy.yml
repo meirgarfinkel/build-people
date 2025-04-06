@@ -64,7 +64,7 @@ jobs:
 
       - name: Generate deployment scripts
         run: |
-          # Create appspec.yml with CORRECT paths
+          # Create appspec.yml
           cat > appspec.yml <<'EOL'
           version: 0.0
           os: linux
@@ -82,60 +82,83 @@ jobs:
                 runas: root
           EOL
 
-          # Create CORRECT directory structure that matches appspec.yml
+          # Create deployment_scripts directory
           mkdir -p deployment_scripts
 
-          # Create before_install.sh in the right location
+          # =====================
+          # BEFORE INSTALL SCRIPT
+          # =====================
           cat > deployment_scripts/before_install.sh <<'EOL'
           #!/bin/bash
+          set -e
+
           # Fetch secrets from SSM
           DB_HOST=$(aws ssm get-parameter --name "/build-people/DB_HOST" --with-decryption --query "Parameter.Value" --output text)
           DB_PASSWORD=$(aws ssm get-parameter --name "/build-people/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text)
           SECRET_KEY=$(aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text)
-          
-          # Export for use in after_install
-          echo "export DB_HOST=${DB_HOST}" > /tmp/deployment_secrets
-          echo "export DB_PASSWORD=${DB_PASSWORD}" >> /tmp/deployment_secrets
-          echo "export SECRET_KEY=${SECRET_KEY}" >> /tmp/deployment_secrets
-          echo "export IMAGE_VERSION=${IMAGE_VERSION}" >> /tmp/deployment_secrets
+
+          # Store them for docker compose in .env file
+          cat > /home/ec2-user/deployment_scripts/.env.deploy <<EOF
+          DB_HOST=${DB_HOST}
+          DB_PASSWORD=${DB_PASSWORD}
+          SECRET_KEY=${SECRET_KEY}
+          IMAGE_VERSION=${IMAGE_VERSION}
+          EOF
+
+          chmod 600 /home/ec2-user/deployment_scripts/.env.deploy
           EOL
 
-          # Create after_install.sh in the right location
+          # ====================
+          # AFTER INSTALL SCRIPT
+          # ====================
           cat > deployment_scripts/after_install.sh <<'EOL'
           #!/bin/bash
-          # Load secrets
-          source /tmp/deployment_secrets
-          
-          # Debug info
+          set -e
+
+          ENV_FILE="/home/ec2-user/deployment_scripts/.env.deploy"
+
+          if [ ! -f "$ENV_FILE" ]; then
+            echo "Missing .env.deploy file"
+            exit 1
+          fi
+
+          # Load environment
+          set -o allexport
+          source "$ENV_FILE"
+          set +o allexport
+
           echo "Starting deployment with IMAGE_VERSION: ${IMAGE_VERSION}"
-          
-          # 1. Stop existing containers (ignore errors if none exist)
-          docker-compose -f /home/ec2-user/docker-compose.prod.yml down || true
-          
-          # 2. Start new containers with environment variables
-          DB_HOST="${DB_HOST}" \
-          DB_PASSWORD="${DB_PASSWORD}" \
-          SECRET_KEY="${SECRET_KEY}" \
-          docker-compose -f /home/ec2-user/docker-compose.prod.yml up -d
-          
-          # 3. Health check with timeout
+
+          # 1. Stop current containers
+          if command -v docker compose &>/dev/null; then
+            docker compose -f /home/ec2-user/docker-compose.prod.yml down || true
+          else
+            echo "docker compose not found!"
+            exit 1
+          fi
+
+          # 2. Start containers
+          docker compose --env-file "$ENV_FILE" -f /home/ec2-user/docker-compose.prod.yml up -d
+
+          # 3. Wait for container to start
           for i in {1..6}; do
             if docker ps --format '{{.Names}}' | grep -q 'build-people'; then
               echo "Container started successfully!"
+              rm -f "$ENV_FILE"
               exit 0
             fi
             sleep 5
           done
-          
-          # 4. Debug info if failed
+
+          # 4. On failure, show logs
           echo "Deployment failed! Current state:"
           docker ps -a
-          docker-compose -f /home/ec2-user/docker-compose.prod.yml logs
+          docker compose -f /home/ec2-user/docker-compose.prod.yml logs
           exit 1
           EOL
 
-          # Fix permissions
           chmod +x deployment_scripts/*.sh
+
       
       # ======================
       # 6. S3 UPLOAD
