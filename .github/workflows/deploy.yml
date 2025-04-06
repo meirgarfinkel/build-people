@@ -154,8 +154,6 @@ jobs:
           exit 1
           EOL
 
-          # Fix line endings (LF) and permissions
-          dos2unix scripts/*.sh
           chmod +x scripts/*.sh
       
       # ======================
