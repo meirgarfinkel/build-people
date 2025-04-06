@@ -44,7 +44,7 @@ jobs:
         env:
           IMAGE_VERSION: ${{ github.sha }}
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/build-people:${IMAGE_VERSION} .
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/build-people:${IMAGE_VERSION} -f Dockerfile.prod .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/build-people:${IMAGE_VERSION}
 
       # ======================
