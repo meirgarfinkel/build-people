@@ -73,17 +73,19 @@ jobs:
               destination: /home/ec2-user/deployment_scripts
           hooks:
             BeforeInstall:
-              - location: scripts/before_install.sh
+              - location: deployment_scripts/before_install.sh
                 timeout: 300
                 runas: root
             AfterInstall:
-              - location: scripts/after_install.sh
+              - location: deployment_scripts/after_install.sh
                 timeout: 300
                 runas: root
           EOL
 
-          # Create deployment scripts
+          # Create deployment scripts directory
           mkdir -p scripts
+
+          # Create before_install.sh with LF line endings
           cat > scripts/before_install.sh <<'EOL'
           #!/bin/bash
           # Fetch secrets from SSM
@@ -98,29 +100,30 @@ jobs:
           echo "export IMAGE_VERSION=${IMAGE_VERSION}" >> /tmp/deployment_secrets
           EOL
 
+          # Create after_install.sh with absolute paths
           cat > scripts/after_install.sh <<'EOL'
           #!/bin/bash
           # Load secrets
           source /tmp/deployment_secrets
           
           # Create versioned resources
-          NEW_VOLUME="static_${IMAGE_VERSION}"
-          NEW_COMPOSE="docker-compose.${IMAGE_VERSION}.yml"
+          NEW_VOLUME="/home/ec2-user/static_${IMAGE_VERSION}"
+          NEW_COMPOSE="/home/ec2-user/docker-compose.${IMAGE_VERSION}.yml"
           docker volume create ${NEW_VOLUME}
 
-          # Build assets with secret injection
+          # Build assets (using absolute paths)
           docker run --rm \
             -v ${NEW_VOLUME}:/app/staticfiles \
-            -v $(pwd)/theme/static_src:/app/theme/static_src \
+            -v /home/ec2-user/theme/static_src:/app/theme/static_src \
             -e DB_HOST="${DB_HOST}" \
             -e SECRET_KEY="${SECRET_KEY}" \
             mgarfinkel/build-people:${IMAGE_VERSION} \
             sh -c "python manage.py tailwind build && python manage.py collectstatic --noinput --clear"
 
           # Prepare deployment
-          cp docker-compose.prod.yml ${NEW_COMPOSE}
-          sed -i "s/static_volume:/${NEW_VOLUME}:/" ${NEW_COMPOSE}
-          sed -i "s/image:.*/image: mgarfinkel\/build-people:${IMAGE_VERSION}/" ${NEW_COMPOSE}
+          cp /home/ec2-user/docker-compose.prod.yml ${NEW_COMPOSE}
+          sed -i "s|static_volume:|${NEW_VOLUME}:|" ${NEW_COMPOSE}
+          sed -i "s|image:.*|image: mgarfinkel/build-people:${IMAGE_VERSION}|" ${NEW_COMPOSE}
 
           # Deploy with secrets
           DB_HOST="${DB_HOST}" \
@@ -136,26 +139,35 @@ jobs:
           for i in {1..6}; do
             if docker compose -f ${NEW_COMPOSE} ps web | grep healthy; then
               echo "Deployment successful!"
-              
-              # Cleanup old volumes (keep last 2)
               docker volume ls -q --filter name=static_ | sort -r | tail -n +3 | xargs -r docker volume rm
-              
-              # Update symlink
-              ln -sf ${NEW_COMPOSE} docker-compose.current.yml
+              ln -sf ${NEW_COMPOSE} /home/ec2-user/docker-compose.current.yml
               exit 0
             fi
             sleep 5
           done
 
-          # Rollback procedure
+          # Rollback
           echo "Deployment failed - initiating rollback"
-          docker compose -f docker-compose.current.yml up -d
+          docker compose -f /home/ec2-user/docker-compose.current.yml up -d
           docker volume rm ${NEW_VOLUME}
           rm ${NEW_COMPOSE}
           exit 1
           EOL
 
+          # Fix line endings (LF) and permissions
+          dos2unix scripts/*.sh
           chmod +x scripts/*.sh
+      
+      # ======================
+      # 6. S3 UPLOAD
+      # ======================
+      - name: Package and Upload to S3
+        run: |
+          # Package appspec.yml + scripts
+          zip -r deployment.zip appspec.yml scripts/
+
+          # Upload to S3 (with commit SHA as key)
+          aws s3 cp deployment.zip s3://build-people-s3/deployments/${GITHUB_SHA}.zip
 
       # ======================
       # 6. TRIGGER DEPLOYMENT
@@ -176,16 +188,16 @@ jobs:
           client = boto3.client('codedeploy', region_name=os.getenv('AWS_REGION'))
 
           response = client.create_deployment(
-              applicationName=os.getenv('CODEDEPLOY_APPLICATION_NAME'),
-              deploymentGroupName=os.getenv('CODEDEPLOY_DEPLOYMENT_GROUP_NAME'),
-              revision={
-                  'revisionType': 'GitHub',
-                  'gitHubLocation': {
-                      'repository': os.getenv('GITHUB_REPO'),
-                      'commitId': os.getenv('GITHUB_COMMIT_SHA')
-                  }
-              },
-              description=f'Deployment for image version {os.getenv("IMAGE_VERSION")}'
+            applicationName=os.getenv("CODEDEPLOY_APPLICATION_NAME"),
+            deploymentGroupName=os.getenv("CODEDEPLOY_DEPLOYMENT_GROUP_NAME"),
+            revision={
+                'revisionType': 'S3',
+                's3Location': {
+                    'bucket': 'build-people-s3',
+                    'key': f'deployments/{os.getenv("GITHUB_SHA")}.zip',
+                    'bundleType': 'zip'
+                }
+            }
           )
           print(f"Deployment started: {response['deploymentId']}")
           EOF
