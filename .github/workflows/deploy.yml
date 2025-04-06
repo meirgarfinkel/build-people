@@ -150,18 +150,18 @@ jobs:
             --region "$AWS_REGION" \
             --revision "revisionType=S3,s3Location={bucket=build-people-s3,key=deployments/${{ github.sha }}.zip,bundleType=zip}"
 
-      # ======================
-      # 8. VERIFY DEPLOYMENT STATUS (OPTIONAL)
-      # ======================
-      - name: Verify Deployment Status (Optional)
-        run: |
-          DEPLOYMENT_ID=$(aws deploy list-deployments \
-            --application-name "$CODEDEPLOY_APPLICATION_NAME" \
-            --deployment-group-name "$CODEDEPLOY_DEPLOYMENT_GROUP_NAME" \
-            --query "deployments[0]" \
-            --region "$AWS_REGION" \
-            --output text)
+      # # ======================
+      # # 8. VERIFY DEPLOYMENT STATUS (OPTIONAL)
+      # # ======================
+      # - name: Verify Deployment Status (Optional)
+      #   run: |
+      #     DEPLOYMENT_ID=$(aws deploy list-deployments \
+      #       --application-name "$CODEDEPLOY_APPLICATION_NAME" \
+      #       --deployment-group-name "$CODEDEPLOY_DEPLOYMENT_GROUP_NAME" \
+      #       --query "deployments[0]" \
+      #       --region "$AWS_REGION" \
+      #       --output text)
           
-          aws deploy wait deployment-successful \
-            --deployment-id "$DEPLOYMENT_ID" \
-            --region "$AWS_REGION"
+      #     aws deploy wait deployment-successful \
+      #       --deployment-id "$DEPLOYMENT_ID" \
+      #       --region "$AWS_REGION"
