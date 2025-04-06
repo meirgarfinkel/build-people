@@ -43,23 +43,24 @@ jobs:
       # ======================
       # 4. BUILD AND PUSH DOCKER IMAGE
       # ======================
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       - name: Build and Push Docker Image
         env:
           IMAGE_VERSION: ${{ github.sha }}
         run: |
-          # Copy ALL files to build context
-          cp -r . docker-build-context
-          cd docker-build-context
+          # Create clean build context
+          mkdir ../docker-build-context
+          rsync -av --exclude='docker-build-context/' --exclude='.git/' ./ ../docker-build-context/
+          
+          # Build with proper context
+          cd ../docker-build-context
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/build-people:${IMAGE_VERSION} -f Dockerfile.prod .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/build-people:${IMAGE_VERSION}
+          
+          # Cleanup
+          cd ..
+          rm -rf docker-build-context
 
-            # ======================
+      # ======================
       # 5. PACKAGE DEPLOYMENT ARTIFACTS
       # ======================
       - name: Package Deployment Artifacts
