@@ -33,10 +33,7 @@ RUN groupadd -r appuser && \
     chown -R appuser:appuser /app
 
 # Copy installed dependencies (modified copy commands)
-COPY --from=python-builder --chown=appuser:appuser /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=python-builder --chown=appuser:appuser /usr/local/bin /usr/local/bin
-COPY --from=python-builder --chown=appuser:appuser /app/.venv /app/.venv
-COPY --from=tailwind-builder --chown=appuser:appuser /app/theme/static_src/node_modules ./theme/static_src/node_modules
+COPY --from=python-builder --chown=appuser:appuser /app /app
 
 # Runtime configuration (updated PATH)
 ENV PYTHONUNBUFFERED=1 \
