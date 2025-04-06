@@ -64,10 +64,10 @@ jobs:
 
       - name: Generate deployment scripts
         run: |
-          # Ensure directory exists
+          # Create deployment_scripts directory
           mkdir -p deployment_scripts
 
-          # Inject IMAGE_VERSION
+          # Inject IMAGE_VERSION into image_version.sh inside deployment_scripts
           echo "export IMAGE_VERSION=${IMAGE_VERSION}" > deployment_scripts/image_version.sh
 
           # Create appspec.yml
@@ -128,12 +128,7 @@ jobs:
 
           echo "Starting deployment with IMAGE_VERSION: ${IMAGE_VERSION}"
 
-          if command -v docker compose &>/dev/null; then
-            docker compose -f /home/ec2-user/docker-compose.prod.yml down || true
-          else
-            echo "docker compose not found!"
-            exit 1
-          fi
+          docker compose -f /home/ec2-user/docker-compose.prod.yml down || true
 
           docker compose --env-file "$ENV_FILE" -f /home/ec2-user/docker-compose.prod.yml up -d
 
