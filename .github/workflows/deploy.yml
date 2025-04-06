@@ -53,6 +53,9 @@ jobs:
         env:
           IMAGE_VERSION: ${{ github.sha }}
         run: |
+          # Copy ALL files to build context
+          cp -r . docker-build-context
+          cd docker-build-context
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/build-people:${IMAGE_VERSION} -f Dockerfile.prod .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/build-people:${IMAGE_VERSION}
 
@@ -117,7 +120,7 @@ jobs:
           os: linux
           files:
             - source: /
-              destination: /home/ec2-user/build-people/
+              destination: /home/ec2-user/build-people-temp
           hooks:
             ApplicationStop:
               - location: deployment_scripts/application_stop.sh
