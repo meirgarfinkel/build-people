@@ -122,6 +122,7 @@ jobs:
           EOL 
 
           echo ".env file created successfully."
+          EOF
 
           # Package everything into a zip file for CodeDeploy deployment
           zip -r deployment.zip appspec.yml deployment_scripts/
