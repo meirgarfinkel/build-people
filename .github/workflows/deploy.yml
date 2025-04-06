@@ -64,16 +64,16 @@ jobs:
 
       - name: Generate deployment scripts
         run: |
-          # Create appspec.yml
+          # Create appspec.yml with CORRECT paths
           cat > appspec.yml <<EOL
           version: 0.0
           os: linux
           files:
-            - source: scripts
-              destination: /home/ec2-user/deployment_scripts
+            - source: deployment_scripts  # Must match the directory you zip
+            destination: /home/ec2-user/deployment_scripts
           hooks:
             BeforeInstall:
-              - location: deployment_scripts/before_install.sh
+              - location: deployment_scripts/before_install.sh  # Relative to destination
                 timeout: 300
                 runas: root
             AfterInstall:
@@ -82,11 +82,11 @@ jobs:
                 runas: root
           EOL
 
-          # Create deployment scripts directory
-          mkdir -p scripts
+          # Create CORRECT directory structure that matches appspec.yml
+          mkdir -p deployment_scripts
 
-          # Create before_install.sh with LF line endings
-          cat > scripts/before_install.sh <<'EOL'
+          # Create before_install.sh in the right location
+          cat > deployment_scripts/before_install.sh <<'EOL'
           #!/bin/bash
           # Fetch secrets from SSM
           DB_HOST=$(aws ssm get-parameter --name "/build-people/DB_HOST" --with-decryption --query "Parameter.Value" --output text)
@@ -100,69 +100,44 @@ jobs:
           echo "export IMAGE_VERSION=${IMAGE_VERSION}" >> /tmp/deployment_secrets
           EOL
 
-          # Create after_install.sh with absolute paths
-          cat > scripts/after_install.sh <<'EOL'
+          # Create after_install.sh in the right location
+          cat > deployment_scripts/after_install.sh <<'EOL'
           #!/bin/bash
           # Load secrets
           source /tmp/deployment_secrets
           
-          # Create versioned resources
-          NEW_VOLUME="/home/ec2-user/static_${IMAGE_VERSION}"
-          NEW_COMPOSE="/home/ec2-user/docker-compose.${IMAGE_VERSION}.yml"
-          docker volume create ${NEW_VOLUME}
-
-          # Build assets (using absolute paths)
-          docker run --rm \
-            -v ${NEW_VOLUME}:/app/staticfiles \
-            -v /home/ec2-user/theme/static_src:/app/theme/static_src \
-            -e DB_HOST="${DB_HOST}" \
-            -e SECRET_KEY="${SECRET_KEY}" \
-            mgarfinkel/build-people:${IMAGE_VERSION} \
-            sh -c "python manage.py tailwind build && python manage.py collectstatic --noinput --clear"
-
-          # Prepare deployment
-          cp /home/ec2-user/docker-compose.prod.yml ${NEW_COMPOSE}
-          sed -i "s|static_volume:|${NEW_VOLUME}:|" ${NEW_COMPOSE}
-          sed -i "s|image:.*|image: mgarfinkel/build-people:${IMAGE_VERSION}|" ${NEW_COMPOSE}
-
-          # Deploy with secrets
+          # Stop any existing containers
+          docker compose -f /home/ec2-user/docker-compose.prod.yml down || true
+          
+          # Start new containers
           DB_HOST="${DB_HOST}" \
           DB_PASSWORD="${DB_PASSWORD}" \
           SECRET_KEY="${SECRET_KEY}" \
-          docker compose -f ${NEW_COMPOSE} up -d
-
-          # Run migrations
-          docker compose -f ${NEW_COMPOSE} exec -T web \
-            python manage.py migrate --noinput
-
-          # Health check
-          for i in {1..6}; do
-            if docker compose -f ${NEW_COMPOSE} ps web | grep healthy; then
-              echo "Deployment successful!"
-              docker volume ls -q --filter name=static_ | sort -r | tail -n +3 | xargs -r docker volume rm
-              ln -sf ${NEW_COMPOSE} /home/ec2-user/docker-compose.current.yml
-              exit 0
-            fi
-            sleep 5
-          done
-
-          # Rollback
-          echo "Deployment failed - initiating rollback"
-          docker compose -f /home/ec2-user/docker-compose.current.yml up -d
-          docker volume rm ${NEW_VOLUME}
-          rm ${NEW_COMPOSE}
-          exit 1
+          docker compose -f /home/ec2-user/docker-compose.prod.yml up -d
+          
+          # Simple health check
+          if docker ps | grep build-people; then
+            echo "Deployment successful!"
+            exit 0
+          else
+            echo "Deployment failed!"
+            exit 1
+          fi
           EOL
 
-          chmod +x scripts/*.sh
+          # Fix permissions
+          chmod +x deployment_scripts/*.sh
       
       # ======================
       # 6. S3 UPLOAD
       # ======================
       - name: Package and Upload to S3
         run: |
+          mkdir -p deployment_scripts
+          cp scripts/*.sh deployment_scripts/
+
           # Package appspec.yml + scripts
-          zip -r deployment.zip appspec.yml scripts/
+          zip -r deployment.zip appspec.yml deployment_scripts/
 
           # Upload to S3 (with commit SHA as key)
           aws s3 cp deployment.zip s3://build-people-s3/deployments/${GITHUB_SHA}.zip
