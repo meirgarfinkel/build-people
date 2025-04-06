@@ -70,7 +70,7 @@ jobs:
           os: linux
           files:
             - source: deployment_scripts
-            destination: /home/ec2-user/deployment_scripts
+              destination: /home/ec2-user/deployment_scripts
           hooks:
             BeforeInstall:
               - location: deployment_scripts/before_install.sh
@@ -161,12 +161,12 @@ jobs:
             applicationName=os.getenv("CODEDEPLOY_APPLICATION_NAME"),
             deploymentGroupName=os.getenv("CODEDEPLOY_DEPLOYMENT_GROUP_NAME"),
             revision={
-                'revisionType': 'S3',
-                's3Location': {
-                    'bucket': 'build-people-s3',
-                    'key': f'deployments/{os.getenv("GITHUB_SHA")}.zip',
-                    'bundleType': 'zip'
-                }
+              'revisionType': 'S3',
+              's3Location': {
+                'bucket': 'build-people-s3',
+                'key': f'deployments/{os.getenv("GITHUB_SHA")}.zip',
+                'bundleType': 'zip'
+              }
             }
           )
           print(f"Deployment started: {response['deploymentId']}")
