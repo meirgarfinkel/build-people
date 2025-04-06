@@ -41,7 +41,7 @@ jobs:
           echo "::add-mask::$(aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text)"
 
       # ======================
-      # 4. BUILD AND PUSH DOCKER IMAGE TO DOCKER HUB
+      # 4. BUILD AND PUSH DOCKER IMAGE
       # ======================
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -49,7 +49,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and Push Docker Image to Docker Hub
+      - name: Build and Push Docker Image
         env:
           IMAGE_VERSION: ${{ github.sha }}
         run: |
@@ -63,7 +63,7 @@ jobs:
         run: |
           mkdir -p deployment_scripts
 
-          # Create application_stop.sh script
+          # Application stop script
           cat > deployment_scripts/application_stop.sh <<EOF
           #!/bin/bash
           echo "Stopping Docker container..."
@@ -71,23 +71,37 @@ jobs:
           docker rm build-people || true
           EOF
 
-          # Create application_start.sh script
+          # Application start script
           cat > deployment_scripts/application_start.sh <<EOF
           #!/bin/bash
           echo "Starting Docker container..."
-
           source /home/ec2-user/build-people/.env
-
           docker run -d \\
             --name build-people \\
             -p 8000:8000 \\
-            -e DB_HOST=\$DB_HOST \\
-            -e DB_PASSWORD=\$DB_PASSWORD \\
-            -e SECRET_KEY=\$SECRET_KEY \\
-            ${{ secrets.DOCKERHUB_USERNAME }}/build-people:latest
+            -e DB_HOST=\\\$DB_HOST \\
+            -e DB_PASSWORD=\\\$DB_PASSWORD \\
+            -e SECRET_KEY=\\\$SECRET_KEY \\
+            ${{ secrets.DOCKERHUB_USERNAME }}/build-people:${{ github.sha }}
           EOF
 
-          # Create appspec.yml file for CodeDeploy lifecycle hooks
+          # Environment setup script
+          cat > deployment_scripts/create_env_file.sh <<EOF
+          #!/bin/bash
+          echo "Generating .env file..."
+          mkdir -p /home/ec2-user/build-people/
+          DB_HOST=\$(aws ssm get-parameter --name "/build-people/DB_HOST" --with-decryption --query "Parameter.Value" --output text)
+          DB_PASSWORD=\$(aws ssm get-parameter --name "/build-people/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text)
+          SECRET_KEY=\$(aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text)
+          cat > /home/ec2-user/build-people/.env <<EOL
+          DB_HOST=\$DB_HOST
+          DB_PASSWORD=\$DB_PASSWORD
+          SECRET_KEY=\$SECRET_KEY
+          EOL
+          echo ".env file created"
+          EOF
+
+          # CodeDeploy appspec
           cat > appspec.yml <<EOF
           version: 0.0
           os: linux
@@ -100,44 +114,27 @@ jobs:
                 timeout: 300
                 runas: root
             AfterInstall:
+              - location: deployment_scripts/create_env_file.sh
+                timeout: 300
+                runas: root
               - location: deployment_scripts/application_start.sh
                 timeout: 300
                 runas: root
           EOF
 
-          # Create create_env_file.sh script for generating .env file on EC2 instance from SSM parameters.
-          cat > deployment_scripts/create_env_file.sh <<EOF 
-          #!/bin/bash
-
-          echo "Generating .env file from SSM parameters..."
-          
-          DB_HOST=$(aws ssm get-parameter --name "/build-people/DB_HOST" --with-decryption --query "Parameter.Value" --output text)
-          DB_PASSWORD=$(aws ssm get-parameter --name "/build-people/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text)
-          SECRET_KEY=$(aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text)
-
-          cat > /home/ec2-user/build-people/.env <<EOL 
-          DB_HOST=$DB_HOST 
-          DB_PASSWORD=$DB_PASSWORD 
-          SECRET_KEY=$SECRET_KEY 
-          EOL 
-
-          echo ".env file created successfully."
-          EOF
-
-          # Package everything into a zip file for CodeDeploy deployment
           zip -r deployment.zip appspec.yml deployment_scripts/
 
       # ======================
-      # 6. UPLOAD TO S3 FOR CODEDEPLOY DEPLOYMENT ARTIFACTS
+      # 6. UPLOAD TO S3
       # ======================
-      - name: Upload Deployment Package to S3 Bucket for CodeDeploy
+      - name: Upload to S3
         run: |
           aws s3 cp deployment.zip s3://build-people-s3/deployments/${{ github.sha }}.zip
 
       # ======================
-      # 7. TRIGGER CODEDEPLOY DEPLOYMENT ON EC2 INSTANCE(S)
+      # 7. TRIGGER CODEDEPLOY
       # ======================
-      - name: Trigger CodeDeploy Deployment on EC2 Instances
+      - name: Trigger Deployment
         env:
           CODEDEPLOY_APPLICATION_NAME: ${{ secrets.CODEDEPLOY_APPLICATION_NAME }}
           CODEDEPLOY_DEPLOYMENT_GROUP_NAME: ${{ secrets.CODEDEPLOY_DEPLOYMENT_GROUP_NAME }}
@@ -149,19 +146,3 @@ jobs:
             --deployment-config-name CodeDeployDefault.AllAtOnce \
             --region "$AWS_REGION" \
             --revision "revisionType=S3,s3Location={bucket=build-people-s3,key=deployments/${{ github.sha }}.zip,bundleType=zip}"
-
-      # # ======================
-      # # 8. VERIFY DEPLOYMENT STATUS (OPTIONAL)
-      # # ======================
-      # - name: Verify Deployment Status (Optional)
-      #   run: |
-      #     DEPLOYMENT_ID=$(aws deploy list-deployments \
-      #       --application-name "$CODEDEPLOY_APPLICATION_NAME" \
-      #       --deployment-group-name "$CODEDEPLOY_DEPLOYMENT_GROUP_NAME" \
-      #       --query "deployments[0]" \
-      #       --region "$AWS_REGION" \
-      #       --output text)
-          
-      #     aws deploy wait deployment-successful \
-      #       --deployment-id "$DEPLOYMENT_ID" \
-      #       --region "$AWS_REGION"
