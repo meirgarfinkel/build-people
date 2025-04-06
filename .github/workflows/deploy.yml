@@ -64,7 +64,10 @@ jobs:
 
       - name: Generate deployment scripts
         run: |
-          # Create appspec.yml
+          # Inject IMAGE_VERSION (from GitHub Actions env)
+          echo "export IMAGE_VERSION=${IMAGE_VERSION}" > deployment_scripts/image_version.sh
+
+          # appspec.yml
           cat > appspec.yml <<'EOL'
           version: 0.0
           os: linux
@@ -82,22 +85,22 @@ jobs:
                 runas: root
           EOL
 
-          # Create deployment_scripts directory
           mkdir -p deployment_scripts
 
-          # =====================
-          # BEFORE INSTALL SCRIPT
-          # =====================
+          # before_install.sh
           cat > deployment_scripts/before_install.sh <<'EOL'
           #!/bin/bash
           set -e
 
-          # Fetch secrets from SSM
+          # Load IMAGE_VERSION set from GitHub Actions
+          source /home/ec2-user/deployment_scripts/image_version.sh
+
+          # Fetch secrets
           DB_HOST=$(aws ssm get-parameter --name "/build-people/DB_HOST" --with-decryption --query "Parameter.Value" --output text)
           DB_PASSWORD=$(aws ssm get-parameter --name "/build-people/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text)
           SECRET_KEY=$(aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text)
 
-          # Store them for docker compose in .env file
+          # Write .env.deploy for docker compose
           cat > /home/ec2-user/deployment_scripts/.env.deploy <<EOF
           DB_HOST=${DB_HOST}
           DB_PASSWORD=${DB_PASSWORD}
@@ -108,9 +111,7 @@ jobs:
           chmod 600 /home/ec2-user/deployment_scripts/.env.deploy
           EOL
 
-          # ====================
-          # AFTER INSTALL SCRIPT
-          # ====================
+          # after_install.sh (same as before, no changes needed)
           cat > deployment_scripts/after_install.sh <<'EOL'
           #!/bin/bash
           set -e
@@ -129,7 +130,6 @@ jobs:
 
           echo "Starting deployment with IMAGE_VERSION: ${IMAGE_VERSION}"
 
-          # 1. Stop current containers
           if command -v docker compose &>/dev/null; then
             docker compose -f /home/ec2-user/docker-compose.prod.yml down || true
           else
@@ -137,10 +137,8 @@ jobs:
             exit 1
           fi
 
-          # 2. Start containers
           docker compose --env-file "$ENV_FILE" -f /home/ec2-user/docker-compose.prod.yml up -d
 
-          # 3. Wait for container to start
           for i in {1..6}; do
             if docker ps --format '{{.Names}}' | grep -q 'build-people'; then
               echo "Container started successfully!"
@@ -150,7 +148,6 @@ jobs:
             sleep 5
           done
 
-          # 4. On failure, show logs
           echo "Deployment failed! Current state:"
           docker ps -a
           docker compose -f /home/ec2-user/docker-compose.prod.yml logs
@@ -158,7 +155,6 @@ jobs:
           EOL
 
           chmod +x deployment_scripts/*.sh
-
       
       # ======================
       # 6. S3 UPLOAD
