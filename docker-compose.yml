@@ -2,36 +2,59 @@ services:
   web:
     build:
       context: .
-      dockerfile: Dockerfile.prod
-    command: gunicorn --bind 0.0.0.0:8000 --workers 3 app.wsgi:application
+      dockerfile: .devcontainer/Dockerfile.dev
+    command: python manage.py runserver 0.0.0.0:8000
+    tty: true
+    stdin_open: true
     volumes:
-      - static_volume:/app/static  # Static files collected here
-    environment:
-      - DJANGO_SETTINGS_MODULE=app.settings.production
-      - DB_HOST=${DB_HOST}  # From AWS Parameter Store
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - SECRET_KEY=${SECRET_KEY}  # Never hardcode!
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 512M
-
-  # Nginx (Reverse Proxy + Static Files)
-  nginx:
-    image: nginx:alpine
+      - .:/app
+      - ./theme/static_src:/app/theme/static_src
+      - ./theme/static:/app/theme/static
+      - /app/.venv
     ports:
-      - "80:80"
-      - "443:443"  # Add if HTTPS is configured
-    volumes:
-      - static_volume:/app/static  # Shared with Django
-      - ./nginx/production.conf:/etc/nginx/conf.d/default.conf  # Nginx config
+      - "8000:8000"
+    environment:
+      - DJANGO_SETTINGS_MODULE=app.settings.development
     depends_on:
-      - web
-    restart: unless-stopped
+      - db
+      - redis
 
-  volumes:
-  static_volume:
+  db:
+    image: postgres:16
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - "POSTGRES_HOST_AUTH_METHOD=trust"
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:alpine
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: pgadmin4@pgadmin.org
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - db
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  postgres_data:
+  redis_data:
+  pgadmin_data:
