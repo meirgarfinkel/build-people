@@ -65,7 +65,7 @@ jobs:
       - name: Generate deployment scripts
         run: |
           # Create appspec.yml with CORRECT paths
-          cat > appspec.yml <<EOL
+          cat > appspec.yml <<'EOL'
           version: 0.0
           os: linux
           files:

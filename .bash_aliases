@@ -23,3 +23,10 @@ alias dca='docker attach $(docker ps --filter "name=gratify-web" --format "{{.ID
 alias reload="source  ~/.bashrc"
 alias venv="source .venv/bin/activate"
 alias dj="djlint . --reformat"
+function hotfix() {
+    switch "$1"
+    ga
+    gc "hotfix"
+    update
+    git push --set-upstream origin "$1"
+}
