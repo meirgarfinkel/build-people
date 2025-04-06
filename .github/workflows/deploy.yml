@@ -32,187 +32,90 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       # ======================
-      # 3. SECRET MASKING
+      # 3. BUILD AND PUSH DOCKER IMAGE TO DOCKER HUB
       # ======================
-      - name: Mask AWS secrets in logs
-        run: |
-          echo "::add-mask::$(aws ssm get-parameter --name "/build-people/DB_HOST" --with-decryption --query "Parameter.Value" --output text)"
-          echo "::add-mask::$(aws ssm get-parameter --name "/build-people/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text)"
-          echo "::add-mask::$(aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text)"
-
-      # ======================
-      # 4. IMAGE BUILD
-      # ======================
-      - name: Docker Hub Login
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and Push Image
+      - name: Build and Push Docker Image to Docker Hub
+        env:
+          IMAGE_VERSION: ${{ github.sha }}
         run: |
-          IMAGE_VERSION=$(date +%Y%m%d%H%M%S)
-          echo "IMAGE_VERSION=${IMAGE_VERSION}" >> $GITHUB_ENV
-          docker build -t mgarfinkel/build-people:${IMAGE_VERSION} -f Dockerfile.prod .
-          docker push mgarfinkel/build-people:${IMAGE_VERSION}
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/build-people:${IMAGE_VERSION} .
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/build-people:${IMAGE_VERSION}
 
       # ======================
-      # 5. CODE DEPLOY SETUP
+      # 4. PACKAGE DEPLOYMENT ARTIFACTS
       # ======================
-      - name: Install Python dependencies
-        run: pip install boto3
-
-      - name: Generate deployment scripts
+      - name: Package Deployment Artifacts
         run: |
-          # Create deployment_scripts directory
           mkdir -p deployment_scripts
 
-          # Inject IMAGE_VERSION into image_version.sh inside deployment_scripts
-          echo "export IMAGE_VERSION=${IMAGE_VERSION}" > deployment_scripts/image_version.sh
+          # Create application_stop.sh script
+          cat > deployment_scripts/application_stop.sh <<EOF
+          #!/bin/bash
+          echo "Stopping Docker container..."
+          docker stop build-people || true
+          docker rm build-people || true
+          EOF
 
-          # Create appspec.yml
-          cat > appspec.yml <<'EOL'
+          # Create application_start.sh script
+          cat > deployment_scripts/application_start.sh <<EOF
+          #!/bin/bash
+          echo "Starting Docker container..."
+          source /home/ec2-user/build-people/.env
+
+          docker run -d \\
+            --name build-people \\
+            -p 8000:8000 \\
+            -e DB_HOST=\$DB_HOST \\
+            -e DB_PASSWORD=\$DB_PASSWORD \\
+            -e SECRET_KEY=\$SECRET_KEY \\
+            ${{ secrets.DOCKERHUB_USERNAME }}/build-people:${{ github.sha }}
+          EOF
+
+          # Create appspec.yml file for CodeDeploy lifecycle hooks
+          cat > appspec.yml <<EOF
           version: 0.0
           os: linux
           files:
-            - source: deployment_scripts
-              destination: /home/ec2-user/deployment_scripts
+            - source: /
+              destination: /home/ec2-user/build-people/
           hooks:
-            BeforeInstall:
-              - location: deployment_scripts/before_install.sh
+            ApplicationStop:
+              - location: deployment_scripts/application_stop.sh
                 timeout: 300
                 runas: root
             AfterInstall:
-              - location: deployment_scripts/after_install.sh
+              - location: deployment_scripts/application_start.sh
                 timeout: 300
                 runas: root
-          EOL
-
-          # before_install.sh
-          cat > deployment_scripts/before_install.sh <<'EOL'
-          #!/bin/bash
-          set -e
-
-          DEPLOY_DIR="/home/ec2-user/deployment_scripts"
-          mkdir -p "$DEPLOY_DIR"
-
-          # Load IMAGE_VERSION from current deployment files
-          source "$(dirname "$0")/image_version.sh"
-
-          # Get secrets from SSM
-          DB_HOST=$(aws ssm get-parameter --name "/build-people/DB_HOST" --with-decryption --query "Parameter.Value" --output text)
-          DB_PASSWORD=$(aws ssm get-parameter --name "/build-people/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text)
-          SECRET_KEY=$(aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text)
-
-          # Create/overwrite .env.deploy
-          cat > "$DEPLOY_DIR/.env.deploy" <<'EOF'
-          DB_HOST='%s'
-          DB_PASSWORD='%s'
-          SECRET_KEY='%s'
-          IMAGE_VERSION='%s'
           EOF
 
-          # Safely inject variables using printf to avoid interpretation
-          {
-            printf "$(cat "$DEPLOY_DIR/.env.deploy")\n" \
-            "$(aws ssm get-parameter --name "/build-people/DB_HOST" --with-decryption --query "Parameter.Value" --output text)" \
-            "$(aws ssm get-parameter --name "/build-people/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text)" \
-            "$(aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text)" \
-            "$(source "$(dirname "$0")/image_version.sh"; echo "$IMAGE_VERSION")"
-          } > "$DEPLOY_DIR/.env.deploy"
-
-          chmod 600 "$DEPLOY_DIR/.env.deploy"
-          EOL
-
-          # after_install.sh
-          cat > deployment_scripts/after_install.sh <<'EOL'
-          #!/bin/bash
-          set -e
-
-          DEPLOY_DIR="/home/ec2-user/deployment_scripts"
-          ENV_FILE="$DEPLOY_DIR/.env.deploy"
-
-          # Verify Docker Compose is available to root
-          export PATH=$PATH:/usr/local/bin
-
-          # Load environment safely
-          set -o allexport
-          if [ -f "$ENV_FILE" ]; then
-            source "$ENV_FILE"
-          else
-            echo "ERROR: Missing $ENV_FILE"
-            exit 1
-          fi
-          set +o allexport
-
-          echo "Starting deployment for version: ${IMAGE_VERSION}"
-
-          # Full path to docker-compose
-          DOCKER_COMPOSE="/usr/local/bin/docker-compose"
-
-          # Container management
-          cd /home/ec2-user
-          "$DOCKER_COMPOSE" -f docker-compose.prod.yml down || true
-          "$DOCKER_COMPOSE" --env-file "$ENV_FILE" -f docker-compose.prod.yml up -d
-
-          # Health check
-          for i in {1..6}; do
-            if docker ps --filter "name=build-people" --format "{{.Status}}" | grep -q "healthy"; then
-              echo "Deployment successful!"
-              rm -f "$ENV_FILE"
-              exit 0
-            fi
-            sleep 5
-          done
-
-          echo "Deployment failed - current state:"
-          docker ps -a
-          "$DOCKER_COMPOSE" -f docker-compose.prod.yml logs
-          exit 1
-          EOL
-
-          chmod +x deployment_scripts/*.sh
-      
-      # ======================
-      # 6. S3 UPLOAD
-      # ======================
-      - name: Package and Upload to S3
-        run: |
-          # Package appspec.yml + scripts
+          # Package everything into a zip file for CodeDeploy deployment
           zip -r deployment.zip appspec.yml deployment_scripts/
 
-          # Upload to S3 (with commit SHA as key)
-          aws s3 cp deployment.zip s3://build-people-s3/deployments/${GITHUB_SHA}.zip
+      # ======================
+      # 5. UPLOAD TO S3 FOR CODEDEPLOY DEPLOYMENT ARTIFACTS
+      # ======================
+      - name: Upload Deployment Package to S3 Bucket for CodeDeploy
+        run: |
+          aws s3 cp deployment.zip s3://build-people-s3/deployments/${{ github.sha }}.zip
 
       # ======================
-      # 6. TRIGGER DEPLOYMENT
+      # 6. TRIGGER CODEDEPLOY DEPLOYMENT ON EC2 INSTANCE(S)
       # ======================
-      - name: Trigger CodeDeploy
+      - name: Trigger CodeDeploy Deployment on EC2 Instances
         env:
-          IMAGE_VERSION: ${{ env.IMAGE_VERSION }}
           CODEDEPLOY_APPLICATION_NAME: ${{ secrets.CODEDEPLOY_APPLICATION_NAME }}
           CODEDEPLOY_DEPLOYMENT_GROUP_NAME: ${{ secrets.CODEDEPLOY_DEPLOYMENT_GROUP_NAME }}
-          GITHUB_REPO: ${{ github.repository }}
-          GITHUB_COMMIT_SHA: ${{ github.sha }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
-          python - <<EOF
-          import boto3
-          import os
-
-          client = boto3.client('codedeploy', region_name=os.getenv('AWS_REGION'))
-
-          response = client.create_deployment(
-            applicationName=os.getenv("CODEDEPLOY_APPLICATION_NAME"),
-            deploymentGroupName=os.getenv("CODEDEPLOY_DEPLOYMENT_GROUP_NAME"),
-            revision={
-              'revisionType': 'S3',
-              's3Location': {
-                'bucket': 'build-people-s3',
-                'key': f'deployments/{os.getenv("GITHUB_SHA")}.zip',
-                'bundleType': 'zip'
-              }
-            }
-          )
-          print(f"Deployment started: {response['deploymentId']}")
-          EOF
+          aws deploy create-deployment \
+            --application-name $CODEDEPLOY_APPLICATION_NAME \
+            --deployment-group-name $CODEDEPLOY_DEPLOYMENT_GROUP_NAME \
+            --revision revisionType=S3,s3Location={bucket=build-people-s3,key=deployments/${{ github.sha }}.zip,bundleType=zip} \
+            --deployment-config-name CodeDeployDefault.AllAtOnce \
+            --region $AWS_REGION
