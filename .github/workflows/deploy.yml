@@ -105,12 +105,21 @@ jobs:
           SECRET_KEY=$(aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text)
 
           # Create/overwrite .env.deploy
-          cat > "$DEPLOY_DIR/.env.deploy" <<EOF
-          DB_HOST=${DB_HOST}
-          DB_PASSWORD=${DB_PASSWORD}
-          SECRET_KEY=${SECRET_KEY}
-          IMAGE_VERSION=${IMAGE_VERSION}
+          cat > "$DEPLOY_DIR/.env.deploy" <<'EOF'
+          DB_HOST='%s'
+          DB_PASSWORD='%s'
+          SECRET_KEY='%s'
+          IMAGE_VERSION='%s'
           EOF
+
+          # Safely inject variables using printf to avoid interpretation
+          {
+            printf "$(cat "$DEPLOY_DIR/.env.deploy")\n" \
+            "$(aws ssm get-parameter --name "/build-people/DB_HOST" --with-decryption --query "Parameter.Value" --output text)" \
+            "$(aws ssm get-parameter --name "/build-people/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text)" \
+            "$(aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text)" \
+            "$(source "$(dirname "$0")/image_version.sh"; echo "$IMAGE_VERSION")"
+          } > "$DEPLOY_DIR/.env.deploy"
 
           chmod 600 "$DEPLOY_DIR/.env.deploy"
           EOL
@@ -123,33 +132,42 @@ jobs:
           DEPLOY_DIR="/home/ec2-user/deployment_scripts"
           ENV_FILE="$DEPLOY_DIR/.env.deploy"
 
-          if [ ! -f "$ENV_FILE" ]; then
-            echo "Missing .env.deploy file at $ENV_FILE"
+          # Verify Docker Compose is available to root
+          export PATH=$PATH:/usr/local/bin
+
+          # Load environment safely
+          set -o allexport
+          if [ -f "$ENV_FILE" ]; then
+            source "$ENV_FILE"
+          else
+            echo "ERROR: Missing $ENV_FILE"
             exit 1
           fi
-
-          set -o allexport
-          source "$ENV_FILE"
           set +o allexport
 
-          echo "Starting deployment with IMAGE_VERSION: ${IMAGE_VERSION}"
+          echo "Starting deployment for version: ${IMAGE_VERSION}"
 
-          docker compose -f /home/ec2-user/docker-compose.prod.yml down || true
+          # Full path to docker-compose
+          DOCKER_COMPOSE="/usr/local/bin/docker-compose"
 
-          docker compose --env-file "$ENV_FILE" -f /home/ec2-user/docker-compose.prod.yml up -d
+          # Container management
+          cd /home/ec2-user
+          "$DOCKER_COMPOSE" -f docker-compose.prod.yml down || true
+          "$DOCKER_COMPOSE" --env-file "$ENV_FILE" -f docker-compose.prod.yml up -d
 
+          # Health check
           for i in {1..6}; do
-            if docker ps --format '{{.Names}}' | grep -q 'build-people'; then
-              echo "Container started successfully!"
+            if docker ps --filter "name=build-people" --format "{{.Status}}" | grep -q "healthy"; then
+              echo "Deployment successful!"
               rm -f "$ENV_FILE"
               exit 0
             fi
             sleep 5
           done
 
-          echo "Deployment failed! Current state:"
+          echo "Deployment failed - current state:"
           docker ps -a
-          docker compose -f /home/ec2-user/docker-compose.prod.yml logs
+          "$DOCKER_COMPOSE" -f docker-compose.prod.yml logs
           exit 1
           EOL
 
