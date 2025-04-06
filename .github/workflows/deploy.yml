@@ -64,10 +64,13 @@ jobs:
 
       - name: Generate deployment scripts
         run: |
-          # Inject IMAGE_VERSION (from GitHub Actions env)
+          # Ensure directory exists
+          mkdir -p deployment_scripts
+
+          # Inject IMAGE_VERSION
           echo "export IMAGE_VERSION=${IMAGE_VERSION}" > deployment_scripts/image_version.sh
 
-          # appspec.yml
+          # Create appspec.yml
           cat > appspec.yml <<'EOL'
           version: 0.0
           os: linux
@@ -85,8 +88,6 @@ jobs:
                 runas: root
           EOL
 
-          mkdir -p deployment_scripts
-
           # before_install.sh
           cat > deployment_scripts/before_install.sh <<'EOL'
           #!/bin/bash
@@ -95,12 +96,10 @@ jobs:
           # Load IMAGE_VERSION set from GitHub Actions
           source /home/ec2-user/deployment_scripts/image_version.sh
 
-          # Fetch secrets
           DB_HOST=$(aws ssm get-parameter --name "/build-people/DB_HOST" --with-decryption --query "Parameter.Value" --output text)
           DB_PASSWORD=$(aws ssm get-parameter --name "/build-people/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text)
           SECRET_KEY=$(aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text)
 
-          # Write .env.deploy for docker compose
           cat > /home/ec2-user/deployment_scripts/.env.deploy <<EOF
           DB_HOST=${DB_HOST}
           DB_PASSWORD=${DB_PASSWORD}
@@ -111,7 +110,7 @@ jobs:
           chmod 600 /home/ec2-user/deployment_scripts/.env.deploy
           EOL
 
-          # after_install.sh (same as before, no changes needed)
+          # after_install.sh
           cat > deployment_scripts/after_install.sh <<'EOL'
           #!/bin/bash
           set -e
@@ -123,7 +122,6 @@ jobs:
             exit 1
           fi
 
-          # Load environment
           set -o allexport
           source "$ENV_FILE"
           set +o allexport
