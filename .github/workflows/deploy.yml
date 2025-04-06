@@ -93,14 +93,18 @@ jobs:
           #!/bin/bash
           set -e
 
-          # Use current deployment location instead of destination path
-          DEPLOY_DIR="$(dirname "$0")"
-          source "$DEPLOY_DIR/image_version.sh"
+          DEPLOY_DIR="/home/ec2-user/deployment_scripts"
+          mkdir -p "$DEPLOY_DIR"
 
+          # Load IMAGE_VERSION from current deployment files
+          source "$(dirname "$0")/image_version.sh"
+
+          # Get secrets from SSM
           DB_HOST=$(aws ssm get-parameter --name "/build-people/DB_HOST" --with-decryption --query "Parameter.Value" --output text)
           DB_PASSWORD=$(aws ssm get-parameter --name "/build-people/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text)
           SECRET_KEY=$(aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text)
 
+          # Create/overwrite .env.deploy
           cat > "$DEPLOY_DIR/.env.deploy" <<EOF
           DB_HOST=${DB_HOST}
           DB_PASSWORD=${DB_PASSWORD}
