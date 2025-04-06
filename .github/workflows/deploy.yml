@@ -103,7 +103,7 @@ jobs:
       # ======================
       - name: Upload Deployment Package to S3 Bucket for CodeDeploy
         run: |
-          aws s3 cp deployment.zip s3://build-people-s3/deployments/${{ github.sha }}.zip
+          aws s3 cp deployment.zip s3://build-people-s3/deployments/${GITHUB_SHA}.zip
 
       # ======================
       # 6. TRIGGER CODEDEPLOY DEPLOYMENT ON EC2 INSTANCE(S)
@@ -112,10 +112,11 @@ jobs:
         env:
           CODEDEPLOY_APPLICATION_NAME: ${{ secrets.CODEDEPLOY_APPLICATION_NAME }}
           CODEDEPLOY_DEPLOYMENT_GROUP_NAME: ${{ secrets.CODEDEPLOY_DEPLOYMENT_GROUP_NAME }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
           aws deploy create-deployment \
-            --application-name $CODEDEPLOY_APPLICATION_NAME \
-            --deployment-group-name $CODEDEPLOY_DEPLOYMENT_GROUP_NAME \
-            --revision revisionType=S3,s3Location={bucket=build-people-s3,key=deployments/${{ github.sha }}.zip,bundleType=zip} \
+            --application-name "$CODEDEPLOY_APPLICATION_NAME" \
+            --deployment-group-name "$CODEDEPLOY_DEPLOYMENT_GROUP_NAME" \
             --deployment-config-name CodeDeployDefault.AllAtOnce \
-            --region $AWS_REGION
+            --region "$AWS_REGION" \
+            --revision "revisionType=S3,s3Location={bucket=build-people-s3,key=deployments/${GITHUB_SHA}.zip,bundleType=zip}"
