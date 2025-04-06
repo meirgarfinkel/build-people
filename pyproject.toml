@@ -23,6 +23,9 @@ dev = [
   "typing_extensions ~=4.12",
 ]
 
+[project.scripts]
+gunicorn = "gunicorn.app.wsgiapp:run"
+
 [tool.djlint]
 profile = "django"
 reformat = true
