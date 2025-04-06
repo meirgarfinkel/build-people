@@ -107,13 +107,13 @@ jobs:
           source /tmp/deployment_secrets
           
           # Stop any existing containers
-          docker compose -f /home/ec2-user/docker-compose.prod.yml down || true
+          docker-compose -f /home/ec2-user/docker-compose.prod.yml down || true
           
           # Start new containers
           DB_HOST="${DB_HOST}" \
           DB_PASSWORD="${DB_PASSWORD}" \
           SECRET_KEY="${SECRET_KEY}" \
-          docker compose -f /home/ec2-user/docker-compose.prod.yml up -d
+          docker-compose -f /home/ec2-user/docker-compose.prod.yml up -d
           
           # Simple health check
           if docker ps | grep build-people; then
