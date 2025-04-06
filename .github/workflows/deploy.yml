@@ -56,7 +56,7 @@ jobs:
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/build-people:${IMAGE_VERSION} -f Dockerfile.prod .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/build-people:${IMAGE_VERSION}
 
-      # ======================
+            # ======================
       # 5. PACKAGE DEPLOYMENT ARTIFACTS
       # ======================
       - name: Package Deployment Artifacts
@@ -75,13 +75,17 @@ jobs:
           cat > deployment_scripts/application_start.sh <<EOF
           #!/bin/bash
           echo "Starting Docker container..."
-          source /home/ec2-user/build-people/.env
+          
+          # Login to Docker Hub using credentials from SSM
+          DOCKER_USER=\$(aws ssm get-parameter --name "/build-people/DOCKERHUB_USERNAME" --with-decryption --query "Parameter.Value" --output text)
+          DOCKER_PASS=\$(aws ssm get-parameter --name "/build-people/DOCKERHUB_TOKEN" --with-decryption --query "Parameter.Value" --output text)
+          echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
+          
+          # Run container with environment file
           docker run -d \\
             --name build-people \\
             -p 8000:8000 \\
-            -e DB_HOST=\\\$DB_HOST \\
-            -e DB_PASSWORD=\\\$DB_PASSWORD \\
-            -e SECRET_KEY=\\\$SECRET_KEY \\
+            --env-file /home/ec2-user/build-people/.env \\
             ${{ secrets.DOCKERHUB_USERNAME }}/build-people:${{ github.sha }}
           EOF
 
@@ -90,14 +94,19 @@ jobs:
           #!/bin/bash
           echo "Generating .env file..."
           mkdir -p /home/ec2-user/build-people/
-          DB_HOST=\$(aws ssm get-parameter --name "/build-people/DB_HOST" --with-decryption --query "Parameter.Value" --output text)
-          DB_PASSWORD=\$(aws ssm get-parameter --name "/build-people/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text)
-          SECRET_KEY=\$(aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text)
-          cat > /home/ec2-user/build-people/.env <<EOL
-          DB_HOST=\$DB_HOST
-          DB_PASSWORD=\$DB_PASSWORD
-          SECRET_KEY=\$SECRET_KEY
-          EOL
+          
+          # Retrieve parameters with proper quoting
+          aws ssm get-parameter --name "/build-people/DB_HOST" --with-decryption --query "Parameter.Value" --output text > /tmp/db_host
+          aws ssm get-parameter --name "/build-people/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text > /tmp/db_password
+          aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text > /tmp/secret_key
+          
+          # Create .env with proper formatting
+          echo "DB_HOST=\$(cat /tmp/db_host)" > /home/ec2-user/build-people/.env
+          echo "DB_PASSWORD=\$(cat /tmp/db_password)" >> /home/ec2-user/build-people/.env
+          echo "SECRET_KEY=\$(cat /tmp/secret_key)" >> /home/ec2-user/build-people/.env
+          
+          # Cleanup temporary files
+          rm /tmp/db_host /tmp/db_password /tmp/secret_key
           echo ".env file created"
           EOF
 
