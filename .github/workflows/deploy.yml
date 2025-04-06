@@ -69,11 +69,11 @@ jobs:
           version: 0.0
           os: linux
           files:
-            - source: deployment_scripts  # Must match the directory you zip
+            - source: deployment_scripts
             destination: /home/ec2-user/deployment_scripts
           hooks:
             BeforeInstall:
-              - location: deployment_scripts/before_install.sh  # Relative to destination
+              - location: deployment_scripts/before_install.sh
                 timeout: 300
                 runas: root
             AfterInstall:
@@ -133,9 +133,6 @@ jobs:
       # ======================
       - name: Package and Upload to S3
         run: |
-          mkdir -p deployment_scripts
-          cp scripts/*.sh deployment_scripts/
-
           # Package appspec.yml + scripts
           zip -r deployment.zip appspec.yml deployment_scripts/
 
