@@ -1,15 +1,13 @@
 {
     "name": "Build People Dev",
     "dockerComposeFile": [
-        "../docker-compose.yml",
-        "docker-compose.override.yml"
+        "../docker-compose.yml"
     ],
     "service": "web",
     "workspaceFolder": "/app",
     "shutdownAction": "stopCompose",
-    // "forwardPorts": [8000],
-    "remoteUser": "docker",
-    "containerUser": "docker",
+    "remoteUser": "appuser",
+    "containerUser": "appuser",
 
     "customizations": {
         "vscode": {
@@ -23,7 +21,6 @@
             "extensions": [
                 "ms-python.python",
                 "ms-python.vscode-pylance",
-                // "ms-python.debugpy",
                 "ms-azuretools.vscode-docker",
                 "bradlc.vscode-tailwindcss",
                 "batisteo.vscode-django",
@@ -39,7 +36,7 @@
         5050
     ],
     "mounts": [
-        "source=${localEnv:HOME}/.ssh,target=/home/docker/.ssh,type=bind,consistency=cached"
+        "source=${localEnv:HOME}/.ssh,target=/home/appuser/.ssh,type=bind,consistency=cached"
     ],
     "postCreateCommand": "bash ./.devcontainer/post_install.sh"
 }

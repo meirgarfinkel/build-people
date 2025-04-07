@@ -1,21 +1,27 @@
 version: 0.0
 os: linux
 files:
-  - source: /
+  - source: scripts/
+    destination: /home/ec2-user/build-people/scripts
+  - source: docker-compose.prod.yml
     destination: /home/ec2-user/build-people
+
 hooks:
   BeforeInstall:
     - location: scripts/stop_containers.sh
       timeout: 300
       runas: ec2-user
+
   AfterInstall:
     - location: scripts/pull_images.sh
       timeout: 300
       runas: ec2-user
+
   ApplicationStart:
     - location: scripts/start_containers.sh
       timeout: 300
       runas: ec2-user
+
   ValidateService:
     - location: scripts/healthcheck.sh
       timeout: 300

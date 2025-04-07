@@ -36,48 +36,49 @@
 
         {% block css %}
             {% tailwind_css %}
+            <link rel="stylesheet" href="staticfiles/css/dist/styles.css">
             <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css' %}">
         {% endblock css %}
 
     </head>
-    <body class="bg-gray-100 overflow-y-auto scrollbar">
+    <body class="overflow-y-auto bg-gray-100 scrollbar">
 
         {% block nav %}
             <!-- Desktop Navigation (hidden on mobile) -->
-            <nav class="hidden md:block fixed left-0 top-0 h-screen w-60 bg-white border-r p-4">
+            <nav class="fixed top-0 left-0 hidden h-screen p-4 bg-white border-r md:block w-60">
                 <div class="flex flex-col h-full">
                     {% if user.is_authenticated %}
-                        <div class="flex flex-col gap-2 flex-grow">
-                            <a class="w-full px-4 py-2 rounded-xl text-lg text-blue-500 font-bold">Build People</a>
+                        <div class="flex flex-col flex-grow gap-2">
+                            <a class="w-full px-4 py-2 text-lg font-bold text-blue-500 rounded-xl">Build People</a>
                             <a href="{% url 'gratify:home' %}"
-                               class="w-full px-4 py-2 rounded-xl bg-gray-200 hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-bookmark pr-2"></i>Home</a>
+                               class="w-full px-4 py-2 bg-gray-200 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-bookmark"></i>Home</a>
                             <a href="#"
-                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-chess-queen pr-2"></i>Leaderboard</a>
+                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-chess-queen"></i>Leaderboard</a>
                             <a href="{% url 'gratify:profile' %}"
-                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-user pr-2"></i>Profile</a>
+                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-user"></i>Profile</a>
                             <hr />
                             <a href="{% url 'gratify:subscriptions' %}"
-                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-building pr-2"></i>Organization</a>
+                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-building"></i>Organization</a>
                             <a href="#"
-                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-star pr-2"></i>Awards</a>
+                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-star"></i>Awards</a>
                             <a href="#"
-                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-gem pr-2"></i>Rewards</a>
+                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-gem"></i>Rewards</a>
                             {% if user.is_superuser %}
                                 <a href="{% url 'admin:index' %}"
-                                   class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-futbol pr-2"></i>Admin</a>
+                                   class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-futbol"></i>Admin</a>
                             {% endif %}
                         </div>
                         <a href="{% url 'users:logout' %}"
-                           class="w-full px-4 py-2 rounded-xl hover:bg-red-500 hover:text-white text-red-500 mt-auto">
-                            <i class="fa-solid fa-arrow-right-from-bracket pr-2"></i>Logout
+                           class="w-full px-4 py-2 mt-auto text-red-500 rounded-xl hover:bg-red-500 hover:text-white">
+                            <i class="pr-2 fa-solid fa-arrow-right-from-bracket"></i>Logout
                         </a>
                     {% else %}
-                        <div class="flex flex-col gap-2 flex-grow">
-                            <a class="w-full px-4 py-2 rounded-xl text-lg text-blue-500 font-bold">Build People</a>
+                        <div class="flex flex-col flex-grow gap-2">
+                            <a class="w-full px-4 py-2 text-lg font-bold text-blue-500 rounded-xl">Build People</a>
                         </div>
                         <a href="{% url 'users:login' %}"
-                           class="w-full px-4 py-2 rounded-xl hover:bg-red-500 hover:text-white text-green-500 mt-auto">
-                            <i class="fa-solid fa-arrow-right-from-bracket pr-2"></i>Login
+                           class="w-full px-4 py-2 mt-auto text-green-500 rounded-xl hover:bg-red-500 hover:text-white">
+                            <i class="pr-2 fa-solid fa-arrow-right-from-bracket"></i>Login
                         </a>
                     {% endif %}
                 </div>
@@ -85,48 +86,48 @@
             <!-- Mobile Menu Button -->
             {% if user.is_authenticated %}
                 <button id="mobileMenuButton"
-                        class="md:hidden fixed top-4 right-4 z-50 p-3 bg-blue-500 bg-opacity-50 text-white rounded-full shadow-lg hover:bg-blue-600">
+                        class="fixed z-50 p-3 text-white bg-blue-500 bg-opacity-50 rounded-full shadow-lg md:hidden top-4 right-4 hover:bg-blue-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
                 <!-- Mobile Menu Modal -->
                 <div id="mobileMenu"
-                     class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm">
+                     class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 backdrop-blur-sm">
                     <div class="flex items-center justify-center min-h-screen p-4">
                         <div class="bg-white w-full max-w-[250px] rounded-xl p-4 shadow-xl">
                             {% if user.is_authenticated %}
                                 <div class="flex flex-col gap-2">
-                                    <a class="w-full px-4 py-2 rounded-xl text-lg text-blue-500 font-bold">Build People</a>
+                                    <a class="w-full px-4 py-2 text-lg font-bold text-blue-500 rounded-xl">Build People</a>
                                     <a href="#"
-                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-bookmark pr-2"></i>Home</a>
+                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-bookmark"></i>Home</a>
                                     <a href="#"
-                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-chess-queen pr-2"></i>Leaderboard</a>
+                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-chess-queen"></i>Leaderboard</a>
                                     <a href="{% url 'gratify:profile' %}"
-                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-user pr-2"></i>Profile</a>
+                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-user"></i>Profile</a>
                                     <hr />
                                     <a href="{% url 'gratify:subscriptions' %}"
-                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-building pr-2"></i>Organization</a>
+                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-building"></i>Organization</a>
                                     <a href="#"
-                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-star pr-2"></i>Awards</a>
+                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-star"></i>Awards</a>
                                     <a href="#"
-                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-gem pr-2"></i>Rewards</a>
+                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-gem"></i>Rewards</a>
                                     {% if user.is_superuser %}
                                         <a href="{% url 'admin:index' %}"
-                                           class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="fa-regular fa-futbol pr-2"></i>Admin</a>
+                                           class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-futbol"></i>Admin</a>
                                     {% endif %}
                                 </div>
                                 <a href="{% url 'users:logout' %}"
-                                   class="w-full px-4 py-2 rounded-xl gap-2 hover:bg-red-500 hover:text-white text-red-500 mt-auto flex items-center justify-start">
-                                    <i class="fa-solid fa-arrow-right-from-bracket pr-2"></i>Logout
+                                   class="flex items-center justify-start w-full gap-2 px-4 py-2 mt-auto text-red-500 rounded-xl hover:bg-red-500 hover:text-white">
+                                    <i class="pr-2 fa-solid fa-arrow-right-from-bracket"></i>Logout
                                 </a>
                             {% else %}
-                                <div class="flex flex-col gap-2 flex-grow">
-                                    <a class="w-full px-4 py-2 rounded-xl text-lg text-blue-500 font-bold">Build People</a>
+                                <div class="flex flex-col flex-grow gap-2">
+                                    <a class="w-full px-4 py-2 text-lg font-bold text-blue-500 rounded-xl">Build People</a>
                                 </div>
                                 <a href="{% url 'users:login' %}"
-                                   class="w-full px-4 py-2 rounded-xl hover:bg-red-500 hover:text-white text-green-500 mt-auto">
-                                    <i class="fa-solid fa-arrow-right-from-bracket pr-2"></i>Login
+                                   class="w-full px-4 py-2 mt-auto text-green-500 rounded-xl hover:bg-red-500 hover:text-white">
+                                    <i class="pr-2 fa-solid fa-arrow-right-from-bracket"></i>Login
                                 </a>
                             {% endif %}
                             <button id="closeMenu"></button>
@@ -137,12 +138,12 @@
         {% endblock nav %}
 
         <!-- ========== MAIN CONTENT AREA ========== -->
-        <main class="md:ml-60 flex">
+        <main class="flex md:ml-60">
             <div id="floating-messages"
-                 class="hidden md:block fixed top-4 md:right-4 z-50 w-full max-w-xs mx-4 pointer-events-none">
+                 class="fixed z-50 hidden w-full max-w-xs mx-4 pointer-events-none md:block top-4 md:right-4">
                 {% if messages %}
                     {% for message in messages %}
-                        <div class="mb-2 p-4 rounded-xl text-white pointer-events-auto bg-green-500 bg-opacity-75 shadow-lg transition-opacity duration-500"
+                        <div class="p-4 mb-2 text-white transition-opacity duration-500 bg-green-500 bg-opacity-75 shadow-lg pointer-events-auto rounded-xl"
                              id="message-{{ forloop.counter }}">{{ message }}</div>
                     {% endfor %}
                 {% endif %}

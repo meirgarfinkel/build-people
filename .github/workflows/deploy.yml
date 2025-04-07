@@ -68,10 +68,9 @@ jobs:
       # ======================
       # 5. PACKAGE DEPLOYMENT BUNDLE
       # ======================
-      # This step assumes you have an appspec.yml and (optional) scripts directory at the root of your repo.
       - name: Create Deployment Bundle
         run: |
-          zip -r ${DEPLOYMENT_BUNDLE} appspec.yml scripts/
+          zip -r ${DEPLOYMENT_BUNDLE} appspec.yml scripts/ docker-compose.prod.yml
 
       # ======================
       # 6. UPLOAD TO S3
