@@ -34,5 +34,5 @@ services:
     restart: unless-stopped
 
 volumes:
-  static_${IMAGE_VERSION}:  # Dynamically named volume
+  static_${IMAGE_VERSION}:
     external: false
