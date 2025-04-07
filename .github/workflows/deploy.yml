@@ -59,7 +59,7 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -f dockerfile.prod -t $DOCKER_IMAGE:${IMAGE_VERSION} .
+          docker build -f Dockerfile.prod -t $DOCKER_IMAGE:${IMAGE_VERSION} .
 
       - name: Push Docker Image
         run: |
