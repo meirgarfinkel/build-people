@@ -12,9 +12,9 @@ permissions:
 env:
   IMAGE_VERSION: ${{ github.sha }}
   DOCKER_IMAGE: mgarfinkel/build-people
-  S3_BUCKET: build-people-s3  # replace with your S3 bucket name
-  APPLICATION_NAME: build-people  # replace with your CodeDeploy application name
-  DEPLOYMENT_GROUP: build-people-deployment-group  # replace with your deployment group name
+  S3_BUCKET: build-people-s3
+  APPLICATION_NAME: build-people
+  DEPLOYMENT_GROUP: build-people-deployment-group
   DEPLOYMENT_BUNDLE: deployment.zip
 
 jobs:
@@ -59,7 +59,7 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -f Dockerfile.prod -t $DOCKER_IMAGE:${IMAGE_VERSION} .
+          docker build --platform linux/amd64 -f Dockerfile.prod -t $DOCKER_IMAGE:${IMAGE_VERSION} .
 
       - name: Push Docker Image
         run: |
@@ -84,20 +84,12 @@ jobs:
       # 7. DEPLOY WITH CODEDEPLOY
       # ======================
       - name: Deploy to AWS CodeDeploy
-        id: codedeploy
-        uses: aws-actions/aws-codedeploy-deploy@v1
-        with:
-          application-name: ${{ env.APPLICATION_NAME }}
-          deployment-group: ${{ env.DEPLOYMENT_GROUP }}
-          deployment-revision: |
-            {
-              "revisionType": "S3",
-              "s3Location": {
-                "bucket": "${{ env.S3_BUCKET }}",
-                "key": "${{ env.IMAGE_VERSION }}/${{ env.DEPLOYMENT_BUNDLE }}",
-                "bundleType": "zip"
-              }
-            }
+        run: |
+          aws deploy create-deployment \
+            --application-name $APPLICATION_NAME \
+            --deployment-group-name $DEPLOYMENT_GROUP \
+            --s3-location bucket=$S3_BUCKET,key=$IMAGE_VERSION/$DEPLOYMENT_BUNDLE,bundleType=zip \
+            --file-exists-behavior OVERWRITE
 
       - name: Deployment Info
         run: echo "Deployment triggered. Check CodeDeploy console for status."
