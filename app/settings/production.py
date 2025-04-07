@@ -3,14 +3,19 @@ from app.utils.aws_secrets import get_parameter
 
 
 # Environ
-DB_NAME = get_parameter("/build-people/prod/DB_NAME")
-DB_USER = get_parameter("/build-people/prod/DB_USER")
-DB_PASSWORD = get_parameter("/build-people/prod/DB_PASSWORD")
-DB_HOST = get_parameter("/build-people/prod/DB_HOST")
+DB_NAME = get_parameter("/build-people/DB_NAME")
+DB_USER = get_parameter("/build-people/DB_USER")
+DB_PASSWORD = get_parameter("/build-people/DB_PASSWORD")
+DB_HOST = get_parameter("/build-people/DB_HOST")
 SECRET_KEY = get_parameter("/build-people/SECRET_KEY")
 
 DEBUG = False
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
+ALLOWED_HOSTS = [
+    "localhost",
+    "13.219.131.40",
+    "buildpeople.com",
+    "www.buildpeople.com",
+]
 
 # Database configuration
 DATABASES = {
