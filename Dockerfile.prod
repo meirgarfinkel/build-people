@@ -1,53 +1,48 @@
-# Stage 1: Tailwind build
-FROM node:20-bookworm-slim as tailwind-builder
-WORKDIR /app/theme/static_src
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
-COPY theme/static_src/package.json theme/static_src/package-lock.json ./
+# Set non-interactive for apt
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies: build tools, Node.js/npm, and curl (for healthchecks)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    nodejs npm \
+    curl && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+WORKDIR /app
+
+# Install Python dependencies using uv
+COPY pyproject.toml .
+RUN uv lock && uv sync --frozen
+
+# Build Tailwind assets: copy Node dependency files and run npm install
+COPY theme/static_src/package.json theme/static_src/package-lock.json ./theme/static_src/
+WORKDIR /app/theme/static_src
 RUN npm ci --omit=dev
 
-# Stage 2: Python build with uv
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim as python-builder
+# Return to app root and copy application code
 WORKDIR /app
-
-# System dependencies for compilation
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential && \
-    rm -rf /var/lib/apt/lists/*
-
-# Copy dependency specs and install
-COPY pyproject.toml ./
-RUN --mount=type=cache,target=/app/.cache/uv \
-    uv lock && \
-    uv sync --frozen && \
-    uv pip install -e .
-
-# Stage 3: Final runtime image
-FROM python:3.12-slim-bookworm
-WORKDIR /app
-
-# Add non-root user
-RUN groupadd -r appuser && \
-    useradd -r -g appuser appuser
-
-# Copy app code
-COPY --from=python-builder /app /app
 COPY . /app
 
-# Static dirs (owned by appuser)
+# Prepare static directories and adjust ownership for non-root user
 RUN mkdir -p /app/staticfiles /app/theme/static && \
     chown -R appuser:appuser /app
 
-# Runtime environment
+# Set runtime environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONPATH="/app" \
     DJANGO_SETTINGS_MODULE="app.settings.production" \
     PATH="/usr/local/bin:/app/.venv/bin:$PATH"
 
+# Switch to non-root user
 USER appuser
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s \
-    CMD curl -f http://localhost:8000/health/ || exit 1
+# Expose Gunicorn port
+EXPOSE 8000
 
-# Gunicorn (FIXED: update "app" if your Django root is named differently)
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "app.wsgi:application"]
+# Run Gunicorn
+CMD ["uv", "run", "gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "app.wsgi:application"]

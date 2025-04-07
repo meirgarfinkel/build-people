@@ -9,6 +9,14 @@ permissions:
   contents: read
   id-token: write
 
+env:
+  IMAGE_VERSION: ${{ github.sha }}
+  DOCKER_IMAGE: mgarfinkel/build-people
+  S3_BUCKET: build-people-s3  # replace with your S3 bucket name
+  APPLICATION_NAME: build-people  # replace with your CodeDeploy application name
+  DEPLOYMENT_GROUP: build-people-deployment-group  # replace with your deployment group name
+  DEPLOYMENT_BUNDLE: deployment.zip
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -49,122 +57,47 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and Push Docker Image
-        env:
-          IMAGE_VERSION: ${{ github.sha }}
+      - name: Build Docker Image
         run: |
-          # Create clean build context
-          mkdir -p ../docker-build-context
-          rsync -av --exclude='docker-build-context/' --exclude='.git/' ./ ../docker-build-context/
-          
-          # Build and push with proper auth
-          cd ../docker-build-context
-          echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
-          docker buildx build --push \
-            -t ${{ secrets.DOCKERHUB_USERNAME }}/build-people:${IMAGE_VERSION} \
-            -f Dockerfile.prod .
-          
-          # Cleanup
-          cd ..
-          rm -rf docker-build-context
+          docker build -f dockerfile.prod -t $DOCKER_IMAGE:${IMAGE_VERSION} .
+
+      - name: Push Docker Image
+        run: |
+          docker push $DOCKER_IMAGE:${IMAGE_VERSION}
 
       # ======================
-      # 5. PACKAGE DEPLOYMENT ARTIFACTS
+      # 5. PACKAGE DEPLOYMENT BUNDLE
       # ======================
-      - name: Package Deployment Artifacts
+      # This step assumes you have an appspec.yml and (optional) scripts directory at the root of your repo.
+      - name: Create Deployment Bundle
         run: |
-          mkdir -p deployment_scripts
-
-          # Application stop script
-          cat > deployment_scripts/application_stop.sh <<EOF
-          #!/bin/bash
-          echo "Stopping Docker container..."
-          docker stop build-people || true
-          docker rm build-people || true
-          EOF
-
-          # Application start script
-          cat > deployment_scripts/application_start.sh <<EOF
-          #!/bin/bash
-          echo "Starting Docker container..."
-          
-          # Login to Docker Hub using credentials from SSM
-          DOCKER_USER=\$(aws ssm get-parameter --name "/build-people/DOCKERHUB_USERNAME" --with-decryption --query "Parameter.Value" --output text)
-          DOCKER_PASS=\$(aws ssm get-parameter --name "/build-people/DOCKERHUB_TOKEN" --with-decryption --query "Parameter.Value" --output text)
-          echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
-          
-          # Run container with environment file
-          docker run -d \
-            --name build-people \
-            -p 8000:8000 \
-            --env-file /home/ec2-user/build-people/.env \
-            ${{ secrets.DOCKERHUB_USERNAME }}/build-people:${{ github.sha }}
-          EOF
-
-          # Environment setup script
-          cat > deployment_scripts/create_env_file.sh <<EOF
-          #!/bin/bash
-          echo "Generating .env file..."
-          mkdir -p /home/ec2-user/build-people/
-
-          # Retrieve parameters with proper sanitization
-          DB_HOST=\$(aws ssm get-parameter --name "/build-people/DB_HOST" --with-decryption --query "Parameter.Value" --output text | sed 's/["\$]/\\&/g')
-          DB_PASSWORD=\$(aws ssm get-parameter --name "/build-people/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text | sed 's/["\$]/\\&/g')
-          SECRET_KEY=\$(aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text | sed 's/["\$]/\\&/g')
-
-          # Use printf for safe .env creation
-          {
-            printf 'DB_HOST="%s"\n' "\$DB_HOST"
-            printf 'DB_PASSWORD="%s"\n' "\$DB_PASSWORD"
-            printf 'SECRET_KEY="%s"\n' "\$SECRET_KEY"
-          } > /home/ec2-user/build-people/.env
-
-          chmod 600 /home/ec2-user/build-people/.env
-          echo ".env file created"
-          EOF
-
-          # CodeDeploy appspec
-          cat > appspec.yml <<EOF
-          version: 0.0
-          os: linux
-          files:
-            - source: /
-              destination: /home/ec2-user/build-people-temp
-          hooks:
-            ApplicationStop:
-              - location: deployment_scripts/application_stop.sh
-                timeout: 300
-                runas: root
-            AfterInstall:
-              - location: deployment_scripts/create_env_file.sh
-                timeout: 300
-                runas: root
-              - location: deployment_scripts/application_start.sh
-                timeout: 300
-                runas: root
-          EOF
-
-          zip -r deployment.zip appspec.yml deployment_scripts/
+          zip -r ${DEPLOYMENT_BUNDLE} appspec.yml scripts/
 
       # ======================
       # 6. UPLOAD TO S3
       # ======================
       - name: Upload to S3
         run: |
-          aws s3 cp deployment.zip s3://build-people-s3/deployments/${{ github.sha }}.zip
+          aws s3 cp ${DEPLOYMENT_BUNDLE} s3://${S3_BUCKET}/${IMAGE_VERSION}/${DEPLOYMENT_BUNDLE}
 
       # ======================
-      # 7. TRIGGER CODEDEPLOY
+      # 7. DEPLOY WITH CODEDEPLOY
       # ======================
-      - name: Trigger Deployment
-        env:
-          CODEDEPLOY_APPLICATION_NAME: ${{ secrets.CODEDEPLOY_APPLICATION_NAME }}
-          CODEDEPLOY_DEPLOYMENT_GROUP_NAME: ${{ secrets.CODEDEPLOY_DEPLOYMENT_GROUP_NAME }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-        run: |
-          aws deploy create-deployment \
-            --application-name "$CODEDEPLOY_APPLICATION_NAME" \
-            --deployment-group-name "$CODEDEPLOY_DEPLOYMENT_GROUP_NAME" \
-            --deployment-config-name CodeDeployDefault.AllAtOnce \
-            --region "$AWS_REGION" \
-            --revision "revisionType=S3,s3Location={bucket=build-people-s3,key=deployments/${{ github.sha }}.zip,bundleType=zip}"
+      - name: Deploy to AWS CodeDeploy
+        id: codedeploy
+        uses: aws-actions/aws-codedeploy-deploy@v1
+        with:
+          application-name: ${{ env.APPLICATION_NAME }}
+          deployment-group: ${{ env.DEPLOYMENT_GROUP }}
+          deployment-revision: |
+            {
+              "revisionType": "S3",
+              "s3Location": {
+                "bucket": "${{ env.S3_BUCKET }}",
+                "key": "${{ env.IMAGE_VERSION }}/${{ env.DEPLOYMENT_BUNDLE }}",
+                "bundleType": "zip"
+              }
+            }
+
+      - name: Deployment Info
+        run: echo "Deployment triggered. Check CodeDeploy console for status."
