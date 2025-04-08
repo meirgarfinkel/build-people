@@ -8,7 +8,7 @@ files:
   - source: .env
     destination: /home/ec2-user/build-people
   - source: nginx/ssl/
-    destination: /home/ec2-user/build-people
+    destination: /home/ec2-user/build-people/nginx/ssl
 hooks:
   BeforeInstall:
     - location: scripts/stop_containers.sh
