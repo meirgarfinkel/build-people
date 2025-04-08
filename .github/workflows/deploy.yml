@@ -68,7 +68,7 @@ jobs:
 
       - name: Create Deployment Bundle
         run: |
-          zip -r ${DEPLOYMENT_BUNDLE} appspec.yml scripts/ docker-compose.prod.yml .env nginx/ssl
+          zip -r ${DEPLOYMENT_BUNDLE} appspec.yml scripts/ docker-compose.prod.yml .env nginx/ssl/
 
       # 6. UPLOAD deployment.zip TO S3
       - name: Upload to S3
@@ -88,5 +88,5 @@ jobs:
         run: echo "Deployment triggered. Check CodeDeploy console for status."
 
       # 8. Clean up TLS secrets from workspace
-      - name: Clean TLS certs from workspace
-        run: rm -f nginx/ssl/cloudflare.*
+      # - name: Clean TLS certs from workspace
+      #   run: rm -f nginx/ssl/cloudflare.*
