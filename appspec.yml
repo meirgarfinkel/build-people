@@ -5,6 +5,8 @@ files:
     destination: /home/ec2-user/build-people/scripts
   - source: docker-compose.prod.yml
     destination: /home/ec2-user/build-people
+  - source: .env
+    destination: /home/ec2-user/build-people
 
 hooks:
   BeforeInstall:
