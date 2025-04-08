@@ -3,6 +3,8 @@ version: '3.8'
 services:
   web:
     image: mgarfinkel/build-people:${IMAGE_VERSION}
+    env_file:
+      - .env
     volumes:
       - static_volume:/app/staticfiles
     healthcheck:
