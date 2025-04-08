@@ -15,8 +15,6 @@ env:
   APPLICATION_NAME: build-people
   DEPLOYMENT_GROUP: build-people-deployment-group
   DEPLOYMENT_BUNDLE: deployment.zip
-  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-  DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
 jobs:
   deploy:
@@ -41,22 +39,13 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       # ======================
-      # 3. MASK SECRETS IN LOGS
-      # ======================
-      - name: Mask Secrets in Logs
-        run: |
-          echo "::add-mask::$(aws ssm get-parameter --name "/build-people/DB_HOST" --query "Parameter.Value" --output text)"
-          echo "::add-mask::$(aws ssm get-parameter --name "/build-people/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text)"
-          echo "::add-mask::$(aws ssm get-parameter --name "/build-people/SECRET_KEY" --with-decryption --query "Parameter.Value" --output text)"
-
-      # ======================
-      # 4. BUILD AND PUSH DOCKER IMAGE
+      # 3. BUILD AND PUSH DOCKER IMAGE
       # ======================
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${DOCKERHUB_USERNAME}
-          password: ${DOCKERHUB_TOKEN}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       
       - name: Set IMAGE_VERSION with timestamp
         run: echo "IMAGE_VERSION=${{ github.sha }}-$(date +'%m-%d-%H-%M')" >> $GITHUB_ENV
@@ -70,27 +59,27 @@ jobs:
           docker push $DOCKER_IMAGE:${IMAGE_VERSION}
 
       # ======================
-      # 5. PACKAGE DEPLOYMENT BUNDLE
+      # 4. PACKAGE DEPLOYMENT BUNDLE
       # ======================
       - name: Write image version and Docker Hub credentials to .env
         run: |
           echo "IMAGE_VERSION=${IMAGE_VERSION}" > .env
-          echo "DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}" >> .env
-          echo "DOCKERHUB_TOKEN=${DOCKERHUB_TOKEN}" >> .env
+          echo "DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}" >> .env
+          echo "DOCKERHUB_TOKEN=${{ secrets.DOCKERHUB_TOKEN }}" >> .env
 
       - name: Create Deployment Bundle
         run: |
           zip -r ${DEPLOYMENT_BUNDLE} appspec.yml scripts/ docker-compose.prod.yml .env
 
       # ======================
-      # 6. UPLOAD deployment.zip TO S3
+      # 5. UPLOAD deployment.zip TO S3
       # ======================
       - name: Upload to S3
         run: |
           aws s3 cp ${DEPLOYMENT_BUNDLE} s3://${S3_BUCKET}/${IMAGE_VERSION}/${DEPLOYMENT_BUNDLE}
 
       # ======================
-      # 7. DEPLOY WITH CODEDEPLOY
+      # 6. DEPLOY WITH CODEDEPLOY
       # ======================
       - name: Deploy to AWS CodeDeploy
         run: |
