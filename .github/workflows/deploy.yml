@@ -15,6 +15,8 @@ env:
   APPLICATION_NAME: build-people
   DEPLOYMENT_GROUP: build-people-deployment-group
   DEPLOYMENT_BUNDLE: deployment.zip
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
 jobs:
   deploy:
@@ -53,8 +55,8 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${DOCKERHUB_USERNAME}
+          password: ${DOCKERHUB_TOKEN}
       
       - name: Set IMAGE_VERSION with timestamp
         run: echo "IMAGE_VERSION=${{ github.sha }}-$(date +'%m-%d-%H-%M')" >> $GITHUB_ENV
@@ -70,8 +72,11 @@ jobs:
       # ======================
       # 5. PACKAGE DEPLOYMENT BUNDLE
       # ======================
-      - name: Write image version to .env
-        run: echo "IMAGE_VERSION=${IMAGE_VERSION}" > .env
+      - name: Write image version and Docker Hub credentials to .env
+        run: |
+          echo "IMAGE_VERSION=${IMAGE_VERSION}" > .env
+          echo "DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}" >> .env
+          echo "DOCKERHUB_TOKEN=${DOCKERHUB_TOKEN}" >> .env
 
       - name: Create Deployment Bundle
         run: |
