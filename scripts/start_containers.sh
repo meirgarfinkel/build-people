@@ -34,4 +34,4 @@ docker-compose -f docker-compose.prod.yml up -d --remove-orphans
 sleep 5
 
 echo "Running migrations..."
-docker exec build-people-web-1 python manage.py migrate --noinput
+docker-compose -f docker-compose.prod.yml exec web uv run python manage.py migrate --noinput
