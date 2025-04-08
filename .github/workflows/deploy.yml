@@ -20,33 +20,34 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      # ======================
       # 1. REPOSITORY SETUP
-      # ======================
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
           fetch-depth: 0
 
-      # ======================
       # 2. AWS AUTHENTICATION
-      # ======================
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # ======================
-      # 3. BUILD AND PUSH DOCKER IMAGE
-      # ======================
+      # 3. TLS Injection
+      - name: Write TLS cert
+        run: |
+          mkdir -p nginx/ssl
+          echo "${{ secrets.CLOUDFLARE_CERT }}" > nginx/ssl/cloudflare.crt
+          echo "${{ secrets.CLOUDFLARE_KEY }}" > nginx/ssl/cloudflare.key
+
+      # 4. BUILD AND PUSH DOCKER IMAGE
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
+
       - name: Set IMAGE_VERSION with timestamp
         run: echo "IMAGE_VERSION=${{ github.sha }}-$(date +'%m-%d-%H-%M')" >> $GITHUB_ENV
 
@@ -58,9 +59,7 @@ jobs:
         run: |
           docker push $DOCKER_IMAGE:${IMAGE_VERSION}
 
-      # ======================
-      # 4. PACKAGE DEPLOYMENT BUNDLE
-      # ======================
+      # 5. PACKAGE DEPLOYMENT BUNDLE
       - name: Write image version and Docker Hub credentials to .env
         run: |
           echo "IMAGE_VERSION=${IMAGE_VERSION}" > .env
@@ -69,18 +68,14 @@ jobs:
 
       - name: Create Deployment Bundle
         run: |
-          zip -r ${DEPLOYMENT_BUNDLE} appspec.yml scripts/ docker-compose.prod.yml .env
+          zip -r ${DEPLOYMENT_BUNDLE} appspec.yml scripts/ docker-compose.prod.yml .env nginx/ssl
 
-      # ======================
-      # 5. UPLOAD deployment.zip TO S3
-      # ======================
+      # 6. UPLOAD deployment.zip TO S3
       - name: Upload to S3
         run: |
           aws s3 cp ${DEPLOYMENT_BUNDLE} s3://${S3_BUCKET}/${IMAGE_VERSION}/${DEPLOYMENT_BUNDLE}
 
-      # ======================
-      # 6. DEPLOY WITH CODEDEPLOY
-      # ======================
+      # 7. DEPLOY WITH CODEDEPLOY
       - name: Deploy to AWS CodeDeploy
         run: |
           aws deploy create-deployment \
@@ -91,3 +86,7 @@ jobs:
 
       - name: Deployment Info
         run: echo "Deployment triggered. Check CodeDeploy console for status."
+
+      # 8. Clean up TLS secrets from workspace
+      - name: Clean TLS certs from workspace
+        run: rm -f nginx/ssl/cloudflare.*
