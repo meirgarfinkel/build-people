@@ -3,12 +3,6 @@ version: '3.8'
 services:
   web:
     image: mgarfinkel/build-people:${IMAGE_VERSION}
-    environment:
-      - DB_HOST=${DB_HOST}
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - SECRET_KEY=${SECRET_KEY}
     volumes:
       - static_volume:/app/staticfiles
     healthcheck:

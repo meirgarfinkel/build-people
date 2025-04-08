@@ -23,10 +23,13 @@ RUN mkdir -p /home && \
 WORKDIR /app
 
 # Install Python dependencies using uv
-COPY pyproject.toml .
+COPY . /app
 RUN uv lock && uv sync --frozen
 
-COPY . /app
+# Install Node.js dependencies (including cross-env)
+WORKDIR /app/theme/static_src
+RUN npm install
+WORKDIR /app
 
 # Build Tailwind assets
 RUN uv run python manage.py tailwind build

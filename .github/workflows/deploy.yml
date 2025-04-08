@@ -70,9 +70,12 @@ jobs:
       # ======================
       # 5. PACKAGE DEPLOYMENT BUNDLE
       # ======================
+      - name: Write image version to .env
+        run: echo "IMAGE_VERSION=${IMAGE_VERSION}" > .env
+
       - name: Create Deployment Bundle
         run: |
-          zip -r ${DEPLOYMENT_BUNDLE} appspec.yml scripts/ docker-compose.prod.yml
+          zip -r ${DEPLOYMENT_BUNDLE} appspec.yml scripts/ docker-compose.prod.yml .env
 
       # ======================
       # 6. UPLOAD deployment.zip TO S3
