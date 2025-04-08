@@ -2,7 +2,8 @@
 set -e
 
 echo "Logging into Docker Hub..."
-docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+# Non-interactive Docker login using environment variables
+echo "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
 
 echo "Pulling new Docker image..."
 cd /home/ec2-user/build-people
