@@ -9,18 +9,14 @@ class Company(TimestampedModelMixin):
     Company model that represents the organization.
     """
     name = models.CharField(max_length=255)
-    owner = models.ForeignKey(
-        "users.USER",
-        on_delete=models.CASCADE,
-        related_name="companies"
-    )
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.CASCADE, related_name="owned_companies")
 
     def __str__(self):
         return self.name
 
 
 class EmployeeInvite(TimestampedModelMixin):
-    company = models.ForeignKey("gratify.Company", on_delete=models.CASCADE, related_name="invites")
+    company = models.ForeignKey("build_people.Company", on_delete=models.CASCADE, related_name="invites")
     email = models.EmailField()
     token = models.UUIDField(default=uuid.uuid4, unique=True)  # Unique invite token
     used = models.BooleanField(default=False)

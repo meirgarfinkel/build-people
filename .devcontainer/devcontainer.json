@@ -1,21 +1,15 @@
 {
     "name": "Build People Dev",
-    "dockerComposeFile": [
-        "../docker-compose.yml"
-    ],
+    "dockerComposeFile": ["../docker-compose.yml"],
     "service": "web",
     "workspaceFolder": "/app",
-    "shutdownAction": "stopCompose",
     "remoteUser": "appuser",
-    "containerUser": "appuser",
 
     "customizations": {
         "vscode": {
             "settings": {
-                "terminal.integrated.shell.linux": "/bin/bash",
                 "python.defaultInterpreterPath": "/app/.venv/bin/python",
                 "python.linting.pylintEnabled": true,
-                "terminal.integrated.defaultProfile.linux": "bash",
                 "editor.formatOnSave": true
             },
             "extensions": [
@@ -29,12 +23,7 @@
         }
     },
 
-    "forwardPorts": [
-        8000,
-        5432,
-        8025,
-        5050
-    ],
+    "forwardPorts": [8000, 5432, 8025, 5050],
     "mounts": [
         "source=${localEnv:HOME}/.ssh,target=/home/appuser/.ssh,type=bind,consistency=cached"
     ],

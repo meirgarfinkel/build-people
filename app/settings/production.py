@@ -54,7 +54,7 @@ INSTALLED_APPS = [
     # Local apps
     'shared',
     'users',
-    'gratify',
+    'build_people',
     'theme',
     'tailwind',
 ]
@@ -116,7 +116,7 @@ DATABASES = {
 # ─────────────────────────────
 AUTH_USER_MODEL = 'users.User'
 LOGIN_URL = '/users/login/'
-LOGIN_REDIRECT_URL = '/gratify/'
+LOGIN_REDIRECT_URL = '/build-people/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/users/login'
 
 # ─────────────────────────────

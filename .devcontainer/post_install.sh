@@ -2,23 +2,24 @@
 
 chown -R appuser:appuser /home/appuser/.ssh
 chmod 700 /home/appuser/.ssh
-chmod 600 /home/appuser/.ssh/id_* || true
+find /home/appuser/.ssh -type f -name "id_*" ! -name "*.pub" -exec chmod 600 {} +
+
 
 # Install main dependencies
 # npm install
 
 # Navigate to theme/static_src directory
-# pushd theme/static_src || exit
+pushd theme/static_src || exit
 
 # Install dependencies for theme/static_src
-# npm install
+npm install
 
 # Run dev script
-# npm run build
+npm run build
 
-# popd
+popd
 
-Set Git configuration
+# Set Git configuration
 git config --global --add safe.directory /app
 git config --global user.email "meirgarfinkel@gmail.com"
 git config --global user.name "Meir Garfinkel"
