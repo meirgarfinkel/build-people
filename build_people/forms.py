@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from gratify.models import Recognition
+from build_people.models import Recognition
 
 User = get_user_model()
 

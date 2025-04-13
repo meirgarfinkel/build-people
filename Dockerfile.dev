@@ -4,40 +4,31 @@ FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
+RUN apt-get update && \
+    apt-get install -y git curl && \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
     chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg && \
     echo "deb [signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
-    apt-get update && apt-get install -y nodejs gh && \
+    apt-get update && \
+    apt-get install -y nodejs gh && \
     rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
-RUN mkdir -p /home && \
-    groupadd --gid 1000 appuser && \
-    useradd --uid 1000 --gid 1000 --create-home --home-dir /home/appuser --shell /bin/bash appuser
-
-# Set working directory
-WORKDIR /app
+RUN groupadd --gid 1000 appuser && \
+    useradd --uid 1000 --gid 1000 -m -s /bin/bash appuser
 
 # Install Python dependencies using uv
-COPY . /app
+WORKDIR /app
+COPY . .
 RUN uv lock && uv sync --frozen
 
-# Install Node.js dependencies (including cross-env)
+# Install Node.js dependencies
 WORKDIR /app/theme/static_src
 RUN npm install
+
+# Set environment variables
 WORKDIR /app
-
-# Build Tailwind assets
-RUN uv run python manage.py tailwind build
-
-# Collect static files
-RUN uv run python manage.py collectstatic --noinput
-
-# Set runtime environment variables
 ENV PYTHONUNBUFFERED=1 \
 PYTHONPATH="/app" \
 DJANGO_SETTINGS_MODULE="app.settings.development" \
@@ -49,8 +40,8 @@ RUN chown -R appuser:appuser /app
 # Switch to non-root user for security
 USER appuser
 
-# Expose Gunicorn port
+# Expose Django port
 EXPOSE 8000
 
-# Command to run Gunicorn
-CMD ["uv", "run", "gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "app.wsgi:application"]
+# Command to run Django server
+CMD ["uv", "run", "python", "manage.py", "runserver", "0.0.0.0:8000"]

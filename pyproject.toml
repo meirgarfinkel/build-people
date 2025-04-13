@@ -1,5 +1,5 @@
 [project]
-name = "gratify-2"
+name = "build-people"
 version = "0.0.0"
 requires-python = ">=3.12"
 dependencies = [
@@ -64,5 +64,5 @@ quote-style = "double"
 docstring-code-format = true
 exclude = [
   "users/migrations/**",
-  "gratify/migrations/**",
+  "build_people/migrations/**",
 ]

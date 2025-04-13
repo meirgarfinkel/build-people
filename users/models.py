@@ -21,7 +21,7 @@ class User(AbstractUser, TimestampedModelMixin):
     last_name = models.CharField(_("last name"), max_length=150)
     email = models.EmailField(_("email address"), unique=True)
     role = models.CharField(_("company position"),max_length=10, choices=Roles.choices, default=Roles.EMPLOYEE)
-    company = models.ForeignKey("gratify.Company", on_delete=models.SET_NULL, null=True, blank=True, related_name="users")
+    company = models.ForeignKey("build_people.Company", on_delete=models.PROTECT, related_name="members")
     points_available = models.PositiveIntegerField(default=100)
     points_received = models.PositiveIntegerField(default=0)
 

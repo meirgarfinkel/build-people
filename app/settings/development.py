@@ -15,7 +15,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
 hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
-INTERNAL_IPS = [ip[:-1] + '1' for ip in ips] + ['127.0.0.1']
+INTERNAL_IPS = ['127.0.0.1'] + [ip.rsplit('.', 1)[0] + '.1' for ip in ips]
 
 SITE_ID = 1
 
@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     # Local apps
     'shared',
     'users',
-    'gratify',
+    'build_people',
     'theme',
     'tailwind',
 ]
@@ -107,7 +107,7 @@ DATABASES = {
 # ─────────────────────────────
 AUTH_USER_MODEL = 'users.User'
 LOGIN_URL = '/users/login/'
-LOGIN_REDIRECT_URL = '/gratify/'
+LOGIN_REDIRECT_URL = '/build-people/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/users/login'
 
 # ─────────────────────────────

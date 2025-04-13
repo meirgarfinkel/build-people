@@ -7,6 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     nodejs npm && \
+    postgresql-client && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
@@ -21,12 +22,12 @@ WORKDIR /app
 COPY . /app
 RUN uv lock && uv sync --frozen
 
-# Install Node.js dependencies (including cross-env)
+# Install Node.js dependencies
 WORKDIR /app/theme/static_src
 RUN npm install
 WORKDIR /app
 
-# Build Tailwind assets (make sure it's done after collectstatic)
+# Build Tailwind assets
 RUN uv run python manage.py tailwind build
 
 # Collect static files

@@ -5,12 +5,12 @@ from hx_requests.views import HtmxViewMixin
 from django.db.models import OuterRef, Exists
 from urllib.parse import unquote
 
-from gratify.models import Recognition
+from build_people.models import Recognition
 from users.models import User
 
 
 class HomeView(LoginRequiredMixin, HtmxViewMixin, ListView):
-    template_name = "gratify/home.html"
+    template_name = "build_people/home.html"
     model = Recognition
     context_object_name = "recognitions"
 
@@ -26,11 +26,11 @@ class HomeView(LoginRequiredMixin, HtmxViewMixin, ListView):
 
 
 class PreviewView(LoginRequiredMixin, TemplateView):
-    template_name = "gratify/preview.html"
+    template_name = "build_people/preview.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        url = self.request.GET.get("url", "http://localhost:8000/gratify/")
+        url = self.request.GET.get("url", "http://localhost:8000/build_people/")
         
         # Add the URL to the context
         context["url"] = unquote(url)
@@ -38,8 +38,8 @@ class PreviewView(LoginRequiredMixin, TemplateView):
 
 
 class SubscriptionsView(HtmxViewMixin, LoginRequiredMixin, TemplateView):
-    template_name = "gratify/subscriptions.html"
+    template_name = "build_people/subscriptions.html"
 
 
 class ProfileView(HtmxViewMixin, LoginRequiredMixin, TemplateView):
-    template_name = "gratify/profile.html"
+    template_name = "build_people/profile.html"

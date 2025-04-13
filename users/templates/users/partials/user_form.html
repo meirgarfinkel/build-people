@@ -40,7 +40,7 @@
                     {% for error in form.email.errors %}<p class="text-red-500 text-sm">{{ error }}</p>{% endfor %}
                 </div>
                 <div class="flex justify-between mt-5">
-                    <a href="{% url 'gratify:profile' %}"
+                    <a href="{% url 'build_people:profile' %}"
                        class="w-1/2 bg-gray-500 text-center text-white py-2 rounded-xl hover:bg-gray-600 mr-2">
                         Cancel
                     </a>

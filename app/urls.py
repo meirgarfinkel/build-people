@@ -6,13 +6,10 @@ from django.urls import path, include
 urlpatterns = [
     path("health/", lambda request: HttpResponse("OK")),
     path("admin/", admin.site.urls),
-    path("gratify/", include("gratify.urls")),
-    path("users/", include("users.urls")),
+    path("", include("build_people.urls")),
+    path("", include("users.urls")),
 ]
 
 if settings.DEBUG:
     import debug_toolbar
-
-    urlpatterns = [
-        path("__debug__/", include(debug_toolbar.urls)),
-    ] + urlpatterns
+    urlpatterns = [path("__debug__/", include(debug_toolbar.urls))] + urlpatterns

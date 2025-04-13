@@ -2,8 +2,8 @@ from django.urls import reverse
 from hx_requests.hx_requests import BaseHxRequest, FormHxRequest
 from django.core.mail import send_mail
 from django.contrib import messages
-from gratify.forms import CreateRecognitionForm
-from gratify.models import EmployeeInvite
+from build_people.forms import CreateRecognitionForm
+from build_people.models import EmployeeInvite
 from users.forms import UpdateUserForm
 from django.utils.text import slugify
 
@@ -14,9 +14,9 @@ class AddEmployeeEmail(BaseHxRequest):
 
     def get_context_data(self, **kwargs) -> dict:
         email = self.request.GET.get("email")  # New email
-        existing_emails = self.request.GET.get("employees_list", "").split(",")  # Previous emails
+        existing_emails = self.request.GET.get("employees_list", "").split(",")
 
-        # Remove empty strings and add the new email
+        # Remove empty strings and add the new emails
         all_emails = list(dict.fromkeys([e.strip() for e in existing_emails if e] + ([email] if email else [])))
 
         context = {"new_emails": all_emails}
@@ -25,7 +25,7 @@ class AddEmployeeEmail(BaseHxRequest):
 
 class SendEmployeeInvites(BaseHxRequest):
     name = "send_employee_invites"
-    redirect = reverse("gratify:home")
+    redirect = reverse("build_people:home")
 
     def post(self, request, *args, **kwargs):
         company = request.user.company
@@ -49,7 +49,7 @@ class SendEmployeeInvites(BaseHxRequest):
 
 class ToggleHeart(BaseHxRequest):
     name = "toggle_heart"
-    POST_template = "gratify/partials/heart_button.html"
+    POST_template = "build_people/partials/heart_button.html"
     
     def get_context_on_POST(self, **kwargs):
         context = super().get_context_on_POST(**kwargs)
@@ -72,7 +72,7 @@ class ToggleHeart(BaseHxRequest):
 
 class AddComment(BaseHxRequest):
     name = "add_comment"
-    POST_template = "gratify/partials/recognitions_list.html"
+    POST_template = "build_people/partials/recognitions_list.html"
     
     def get_context_on_POST(self, **kwargs):
         context = super().get_context_on_POST(**kwargs)
@@ -95,8 +95,8 @@ class AddComment(BaseHxRequest):
 class CreateRecognition(FormHxRequest):
     name = "create_recognition"
     form_class = CreateRecognitionForm
-    GET_template = "gratify/partials/recognition_form.html"
-    POST_template = "gratify/partials/recognition_form.html"
+    GET_template = "build_people/partials/recognition_form.html"
+    POST_template = "build_people/partials/recognition_form.html"
 
     def form_valid(self, **kwargs) -> str:
         recognition = self.form.save(commit=False)
@@ -107,7 +107,7 @@ class CreateRecognition(FormHxRequest):
         messages.success(self.request, "Success!")
 
         return self._get_response(
-            template="gratify/partials/recognition_card.html",
+            template="build_people/partials/recognition_card.html",
             context={"recognition": recognition},
             **kwargs
         )
@@ -129,7 +129,7 @@ class UpdateUser(FormHxRequest):
     name = "update_user"
     form_class = UpdateUserForm
     GET_template = "users/partials/user_form.html"
-    redirect = reverse("gratify:profile")
+    redirect = reverse("build_people:profile")
 
     def form_valid(self, **kwargs) -> str:
         user = self.request.user
