@@ -34,7 +34,6 @@ node_modules/
 .dotnet/
 
 # Static files (adjust path if needed)
-static/
 staticfiles/
 
 # Packages
