@@ -2,6 +2,7 @@
 {% load static %}
 {% load static tailwind_tags %}
 {% load hx_tags %}
+{% load shared_tags %}
 <html lang="en">
     <head>
         <title>
@@ -17,12 +18,11 @@
               content="width=device-width,minimum-scale=1,initial-scale=1">
         <meta name="description"
               content="A framework for launching new Django projects quickly.">
-        <meta name="author" content="">
         <link rel="shortcut icon"
               type="image/x-icon"
-              href="{% static 'images/favicon.ico' %}">
+              href="{% static 'theme/images/favicon.ico' %}">
         <!-- HTMX -->
-        <script src="{% static 'js/htmx.min.js' %}"></script>
+        <script src="{% static 'theme/js/htmx.min.js' %}"></script>
         <meta name="htmx-config" content='{"useTemplateFragments":"true"}'>
         <!-- AlpineJS plugins must be placed before the core alpineJS cdn -->
         <!-- <script src="https://unpkg.com/htmx.org@latest/dist/ext/alpine-morph.js"></script> -->
@@ -32,12 +32,11 @@
                 src="https://cdn.jsdelivr.net/npm/@alpinejs/persist@3.x.x/dist/cdn.min.js"></script>
         <script defer
                 src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-        <script src="{% static 'js/base.js' %}"></script>
+        <script src="{% static 'theme/js/base.js' %}"></script>
 
         {% block css %}
             {% tailwind_css %}
             <link rel="stylesheet" href="staticfiles/css/dist/styles.css">
-            <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css' %}">
         {% endblock css %}
 
     </head>
@@ -51,34 +50,47 @@
                         <div class="flex flex-col flex-grow gap-2">
                             <a class="w-full px-4 py-2 text-lg font-bold text-blue-500 rounded-xl">Build People</a>
                             <a href="{% url 'build_people:home' %}"
-                               class="w-full px-4 py-2 bg-gray-200 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-bookmark"></i>Home</a>
-                            <a href="#"
-                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-chess-queen"></i>Leaderboard</a>
+                               class="flex items-center w-full gap-2 px-4 py-2 bg-gray-100 rounded-xl hover:bg-blue-500 hover:text-white">
+                                {% heroicon "home" class="w-6 h-6" %}
+                                Home
+                            </a>
+                            <a href="{% url 'build_people:home' %}"
+                               class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
+                                {% heroicon "trophy" class="w-6 h-6" %}
+                                Leaderboard
+                            </a>
                             <a href="{% url 'build_people:profile' %}"
-                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-user"></i>Profile</a>
+                               class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
+                                {% heroicon "user" class="w-6 h-6" %}
+                                Profile
+                            </a>
                             <hr />
                             <a href="{% url 'build_people:subscriptions' %}"
-                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-building"></i>Organization</a>
-                            <a href="#"
-                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-star"></i>Awards</a>
-                            <a href="#"
-                               class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-gem"></i>Rewards</a>
+                               class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
+                                {% heroicon "organization" class="w-6 h-6" %}
+                                Organization
+                            </a>
                             {% if user.is_superuser %}
                                 <a href="{% url 'admin:index' %}"
-                                   class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-futbol"></i>Admin</a>
+                                   class="flex items-center w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
+                                    {% heroicon "settings" class="w-6 h-6" %}
+                                    Admin
+                                </a>
                             {% endif %}
                         </div>
                         <a href="{% url 'users:logout' %}"
-                           class="w-full px-4 py-2 mt-auto text-red-500 rounded-xl hover:bg-red-500 hover:text-white">
-                            <i class="pr-2 fa-solid fa-arrow-right-from-bracket"></i>Logout
+                           class="flex items-center w-full px-4 py-2 mt-auto text-red-500 rounded-xl hover:bg-red-500 hover:text-white">
+                            {% heroicon "logout" class="w-6 h-6 mr-2" %}
+                            Logout
                         </a>
                     {% else %}
                         <div class="flex flex-col flex-grow gap-2">
                             <a class="w-full px-4 py-2 text-lg font-bold text-blue-500 rounded-xl">Build People</a>
                         </div>
                         <a href="{% url 'users:login' %}"
-                           class="w-full px-4 py-2 mt-auto text-green-500 rounded-xl hover:bg-red-500 hover:text-white">
-                            <i class="pr-2 fa-solid fa-arrow-right-from-bracket"></i>Login
+                           class="flex items-center w-full px-4 py-2 mt-auto text-green-500 rounded-xl hover:bg-red-500 hover:text-white">
+                            {% heroicon "login" class="w-6 h-6 mr-2" %}
+                            Login
                         </a>
                     {% endif %}
                 </div>
@@ -99,27 +111,38 @@
                             {% if user.is_authenticated %}
                                 <div class="flex flex-col gap-2">
                                     <a class="w-full px-4 py-2 text-lg font-bold text-blue-500 rounded-xl">Build People</a>
-                                    <a href="#"
-                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-bookmark"></i>Home</a>
-                                    <a href="#"
-                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-chess-queen"></i>Leaderboard</a>
+                                    <a href="{% url 'build_people:home' %}"
+                                       class="flex items-center w-full gap-2 px-4 py-2 bg-gray-100 rounded-xl hover:bg-blue-500 hover:text-white">
+                                        {% heroicon "home" class="w-6 h-6" %}
+                                        Home
+                                    </a>
+                                    <a href="{% url 'build_people:home' %}"
+                                       class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
+                                        {% heroicon "trophy" class="w-6 h-6" %}
+                                        Leaderboard
+                                    </a>
                                     <a href="{% url 'build_people:profile' %}"
-                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-user"></i>Profile</a>
+                                       class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
+                                        {% heroicon "user" class="w-6 h-6" %}
+                                        Profile
+                                    </a>
                                     <hr />
                                     <a href="{% url 'build_people:subscriptions' %}"
-                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-building"></i>Organization</a>
-                                    <a href="#"
-                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-star"></i>Awards</a>
-                                    <a href="#"
-                                       class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-gem"></i>Rewards</a>
+                                       class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
+                                        {% heroicon "organization" class="w-6 h-6" %}
+                                        Organization
+                                    </a>
                                     {% if user.is_superuser %}
                                         <a href="{% url 'admin:index' %}"
-                                           class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white"><i class="pr-2 fa-regular fa-futbol"></i>Admin</a>
+                                           class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
+                                            {% heroicon "settings" class="w-6 h-6" %}
+                                            Admin
+                                        </a>
                                     {% endif %}
                                 </div>
                                 <a href="{% url 'users:logout' %}"
                                    class="flex items-center justify-start w-full gap-2 px-4 py-2 mt-auto text-red-500 rounded-xl hover:bg-red-500 hover:text-white">
-                                    <i class="pr-2 fa-solid fa-arrow-right-from-bracket"></i>Logout
+                                    {% heroicon "logout" class="w-6 h-6" %}Logout
                                 </a>
                             {% else %}
                                 <div class="flex flex-col flex-grow gap-2">
@@ -127,7 +150,7 @@
                                 </div>
                                 <a href="{% url 'users:login' %}"
                                    class="w-full px-4 py-2 mt-auto text-green-500 rounded-xl hover:bg-red-500 hover:text-white">
-                                    <i class="pr-2 fa-solid fa-arrow-right-from-bracket"></i>Login
+                                    {% heroicon "login" class="w-6 h-6" %}Login
                                 </a>
                             {% endif %}
                             <button id="closeMenu"></button>
@@ -189,7 +212,7 @@
                     }, 2000); // 2000ms = 2 seconds
                 });
             </script>
-            <script src="{% static 'js/base.js' %}"></script>
+            <script src="{% static 'theme/js/base.js' %}"></script>
         {% endblock javascript %}
 
     </body>

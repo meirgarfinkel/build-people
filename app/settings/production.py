@@ -25,10 +25,9 @@ DB_HOST = get_parameter("/build-people/DB_HOST")
 DEBUG = False
 
 ALLOWED_HOSTS = [
-    "localhost",
-    "13.219.131.40",
     "buildpeople.app",
     "www.buildpeople.app",
+    "13.219.131.40",
 ]
 
 SITE_ID = 1
@@ -38,60 +37,60 @@ SITE_ID = 1
 # ─────────────────────────────
 INSTALLED_APPS = [
     # Django apps
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.sites',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.sites",
 
     # Third-party
-    'crispy_forms',
-    'crispy_tailwind',
-    'hx_requests',
+    "crispy_forms",
+    "crispy_tailwind",
+    "hx_requests",
 
     # Local apps
-    'shared',
-    'users',
-    'build_people',
-    'theme',
-    'tailwind',
+    "shared",
+    "users",
+    "build_people",
+    "theme",
+    "tailwind",
 ]
 
 # ─────────────────────────────
 # Middleware
 # ─────────────────────────────
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 # ─────────────────────────────
 # URLs and WSGI
 # ─────────────────────────────
-ROOT_URLCONF = 'app.urls'
-WSGI_APPLICATION = 'app.wsgi.application'
+ROOT_URLCONF = "app.urls"
+WSGI_APPLICATION = "app.wsgi.application"
 
 # ─────────────────────────────
 # Templates
 # ─────────────────────────────
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
@@ -114,10 +113,10 @@ DATABASES = {
 # ─────────────────────────────
 # Authentication
 # ─────────────────────────────
-AUTH_USER_MODEL = 'users.User'
-LOGIN_URL = '/users/login/'
-LOGIN_REDIRECT_URL = '/build-people/'
-ACCOUNT_LOGOUT_REDIRECT_URL = '/users/login'
+AUTH_USER_MODEL = "users.User"
+LOGIN_URL = "/login/"
+LOGIN_REDIRECT_URL = "/"
+ACCOUNT_LOGOUT_REDIRECT_URL = "/login"
 
 # ─────────────────────────────
 # Password Validators
@@ -132,8 +131,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # ─────────────────────────────
 # Internationalization
 # ─────────────────────────────
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
@@ -147,25 +146,25 @@ STATICFILES_DIRS = [
 ]
 STORAGES = {
     "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
     },
 }
 
 # ─────────────────────────────
 # Email
 # ─────────────────────────────
-DEFAULT_FROM_EMAIL = 'no-reply@buildpeople.com'
+DEFAULT_FROM_EMAIL = "no-reply@buildpeople.com"
 
 # ─────────────────────────────
 # Crispy Forms
 # ─────────────────────────────
-CRISPY_ALLOWED_TEMPLATE_PACKS = 'tailwind'
-CRISPY_TEMPLATE_PACK = 'tailwind'
+CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
+CRISPY_TEMPLATE_PACK = "tailwind"
 
 # ─────────────────────────────
 # Tailwind
 # ─────────────────────────────
-TAILWIND_APP_NAME = 'theme'
+TAILWIND_APP_NAME = "theme"
 
 # ─────────────────────────────
 # Security
@@ -176,7 +175,7 @@ SECURE_SSL_REDIRECT = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
-X_FRAME_OPTIONS = 'DENY'
+X_FRAME_OPTIONS = "DENY"
 USE_X_FORWARDED_HOST = True
 
 # ─────────────────────────────

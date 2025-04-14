@@ -6,7 +6,6 @@ services:
     tty: true
     stdin_open: true
     container_name: build-people-web
-    command: uv run python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
       - ./theme/static_src:/app/theme/static_src

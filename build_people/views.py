@@ -1,4 +1,3 @@
-from django.views import View
 from django.views.generic import TemplateView, ListView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from hx_requests.views import HtmxViewMixin
@@ -6,7 +5,6 @@ from django.db.models import OuterRef, Exists
 from urllib.parse import unquote
 
 from build_people.models import Recognition
-from users.models import User
 
 
 class HomeView(LoginRequiredMixin, HtmxViewMixin, ListView):
@@ -30,7 +28,7 @@ class PreviewView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        url = self.request.GET.get("url", "http://localhost:8000/build_people/")
+        url = self.request.GET.get("url", "http://localhost:8000/")
         
         # Add the URL to the context
         context["url"] = unquote(url)
