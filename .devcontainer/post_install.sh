@@ -4,10 +4,6 @@ chown -R appuser:appuser /home/appuser/.ssh
 chmod 700 /home/appuser/.ssh
 find /home/appuser/.ssh -type f -name "id_*" ! -name "*.pub" -exec chmod 600 {} +
 
-
-# Install main dependencies
-# npm install
-
 # Navigate to theme/static_src directory
 pushd theme/static_src || exit
 
@@ -15,7 +11,7 @@ pushd theme/static_src || exit
 npm install
 
 # Run dev script
-npm run build
+npm run dev
 
 popd
 

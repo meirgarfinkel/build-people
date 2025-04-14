@@ -106,9 +106,9 @@ DATABASES = {
 # Authentication
 # ─────────────────────────────
 AUTH_USER_MODEL = 'users.User'
-LOGIN_URL = '/users/login/'
-LOGIN_REDIRECT_URL = '/build-people/'
-ACCOUNT_LOGOUT_REDIRECT_URL = '/users/login'
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/login'
 
 # ─────────────────────────────
 # Static Files
@@ -116,7 +116,6 @@ ACCOUNT_LOGOUT_REDIRECT_URL = '/users/login'
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
-    BASE_DIR / "static",
     BASE_DIR / "theme/static",
 ]
 STORAGES = {
@@ -182,7 +181,7 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False
-X_FRAME_OPTIONS = "DENY"
+X_FRAME_OPTIONS = "SAMEORIGIN"
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 

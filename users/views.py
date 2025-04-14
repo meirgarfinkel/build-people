@@ -72,10 +72,15 @@ class EmployeeSignupView(FormView):
 class LoginView(DjangoLoginView):
     template_name = "users/login.html"
     authentication_form = EmailAuthenticationForm
-    success_url = reverse_lazy("build_people:home")
+    redirect_authenticated_user = True
+
+    def get_success_url(self):
+        return reverse_lazy("build_people:home")
+
 
 
 class LogoutView(View):
     def get(self, request):
         logout(request)
-        return redirect(reverse_lazy("users:login"))
+        return redirect("users:login")
+
