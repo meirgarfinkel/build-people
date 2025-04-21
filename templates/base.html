@@ -3,6 +3,7 @@
 {% load static tailwind_tags %}
 {% load hx_tags %}
 {% load shared_tags %}
+
 <html lang="en">
     <head>
         <title>
@@ -70,15 +71,15 @@
                             </a>
                             {% if user.is_superuser %}
                                 <a href="{% url 'admin:index' %}"
-                                   class="flex items-center w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
+                                   class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
                                     {% heroicon "settings" class="w-6 h-6" %}
                                     Admin
                                 </a>
                             {% endif %}
                         </div>
                         <a href="{% url 'users:logout' %}"
-                           class="flex items-center w-full px-4 py-2 mt-auto text-red-500 rounded-xl hover:bg-red-500 hover:text-white">
-                            {% heroicon "logout" class="w-6 h-6 mr-2" %}
+                           class="flex items-center w-full gap-2 px-4 py-2 mt-auto text-red-500 rounded-xl hover:bg-red-500 hover:text-white">
+                            {% heroicon "logout" class="w-6 h-6" %}
                             Logout
                         </a>
                     {% else %}
@@ -86,8 +87,8 @@
                             <a class="w-full px-4 py-2 text-lg font-bold text-blue-500 rounded-xl">Build People</a>
                         </div>
                         <a href="{% url 'users:login' %}"
-                           class="flex items-center w-full px-4 py-2 mt-auto text-green-500 rounded-xl hover:bg-red-500 hover:text-white">
-                            {% heroicon "login" class="w-6 h-6 mr-2" %}
+                           class="flex items-center w-full gap-2 px-4 py-2 mt-auto text-green-500 rounded-xl hover:bg-red-500 hover:text-white">
+                            {% heroicon "login" class="w-6 h-6" %}
                             Login
                         </a>
                     {% endif %}
@@ -132,7 +133,7 @@
                                     </a>
                                     {% if user.is_superuser %}
                                         <a href="{% url 'admin:index' %}"
-                                           class="w-full px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
+                                           class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
                                             {% heroicon "settings" class="w-6 h-6" %}
                                             Admin
                                         </a>
@@ -147,7 +148,7 @@
                                     <a class="w-full px-4 py-2 text-lg font-bold text-blue-500 rounded-xl">Build People</a>
                                 </div>
                                 <a href="{% url 'users:login' %}"
-                                   class="w-full px-4 py-2 mt-auto text-green-500 rounded-xl hover:bg-red-500 hover:text-white">
+                                   class="w-full gap-2 px-4 py-2 mt-auto text-green-500 rounded-xl hover:bg-red-500 hover:text-white">
                                     {% heroicon "login" class="w-6 h-6" %}Login
                                 </a>
                             {% endif %}
@@ -176,40 +177,6 @@
         </main>
 
         {% block javascript %}
-            <script>
-                document.addEventListener("DOMContentLoaded", () => {
-                    // Select elements
-                    const mobileMenuButton = document.getElementById('mobileMenuButton');
-                    const mobileMenu = document.getElementById('mobileMenu');
-                    const closeMenu = document.getElementById('closeMenu');
-            
-                    // Ensure elements exist before adding event listeners
-                    if (mobileMenuButton && mobileMenu && closeMenu) {
-                        mobileMenuButton.addEventListener('click', () => {
-                            mobileMenu.classList.remove('hidden');
-                        });
-            
-                        closeMenu.addEventListener('click', () => {
-                            mobileMenu.classList.add('hidden');
-                        });
-            
-                        // Close modal when clicking outside
-                        mobileMenu.addEventListener('click', (e) => {
-                            if (!e.target.closest('.max-w-xs')) {
-                                mobileMenu.classList.add('hidden');
-                            }
-                        });
-                    }
-                    setTimeout(function() {
-                        const messagesContainer = document.getElementById("floating-messages");
-                        if (messagesContainer) {
-                            messagesContainer.style.opacity = "0";
-                            // Optionally remove the element after the fade-out transition (500ms)
-                            setTimeout(() => messagesContainer.remove(), 500);
-                        }
-                    }, 2000); // 2000ms = 2 seconds
-                });
-            </script>
             <script src="{% static 'theme/js/base.js' %}"></script>
         {% endblock javascript %}
 

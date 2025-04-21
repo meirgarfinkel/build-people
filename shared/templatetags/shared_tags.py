@@ -5,6 +5,7 @@ import os
 
 register = template.Library()
 
+
 @register.simple_tag
 def heroicon(name, **attrs):
     icon_path = os.path.join(settings.BASE_DIR, 'theme', 'static', 'theme', 'icons', f'{name}.svg')
@@ -24,6 +25,12 @@ def heroicon(name, **attrs):
                 svg = svg.replace(tag, new_tag, 1)
 
             return mark_safe(svg)
-
     except FileNotFoundError:
         return f'<!-- Icon {name}.svg not found -->'
+
+
+@register.filter(name="add_class")
+def add_class(field, css_class):
+    existing_classes = field.field.widget.attrs.get("class", "")
+    all_classes = f"{existing_classes} {css_class}".strip()
+    return field.as_widget(attrs={"class": all_classes})
