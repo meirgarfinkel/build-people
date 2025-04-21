@@ -20,6 +20,7 @@ class HomeView(LoginRequiredMixin, HtmxViewMixin, ListView):
             Recognition.objects.all()
             .annotate(hearted_by_user=Exists(hearts_qs))
             .prefetch_related("hearts", "comments")
+            .order_by("-created_at")
         )
 
 

@@ -1,29 +1,32 @@
 {% load hx_tags %}
+{% load shared_tags %}
 
-<div id="recognition-form-container">
-    <h3 class="text-xl font-semibold mb-4">Give Recognition</h3>
+<div class="w-full p-6 transition-transform duration-200 bg-white shadow-md rounded-xl hover:shadow-lg" id="recognition-form-container">
+    <h3 class="mb-4 text-xl font-semibold text-center">Give Recognition</h3>
     <form method="post" class="space-y-4">
         {% csrf_token %}
-        <div>
-            <label class="block text-gray-700 font-medium">Receiver:</label>
-            {{ form.receiver }}
-            {{ form.receiver.errors }}
+        <div class="flex gap-2">
+            <span class="w-1/2">
+                <label class="font-medium text-gray-800">Points:</label>
+                {{ form.points|add_class:"w-full rounded-xl border border-gray-300 focus:border-slate-400 focus:ring-1 focus:ring-slate-400" }}
+                {{ form.points.errors }}
+            </span>
+            <span class="w-1/2">
+                <label class="font-medium text-gray-800">To:</label>
+                {{ form.receiver|add_class:"w-full rounded-xl border border-gray-300 focus:ring-blue-400" }}
+                {{ form.receiver.errors }}
+            </span>
         </div>
         <div>
-            <label class="block text-gray-700 font-medium">Message:</label>
-            {{ form.message }}
+            <label class="block font-medium text-gray-800">Message:</label>
+            {{ form.message|add_class:"w-full rounded-xl border border-gray-300 resize-none overflow-hidden focus:ring-red-400" }}
             {{ form.message.errors }}
-        </div>
-        <div>
-            <label class="block text-gray-700 font-medium">Points:</label>
-            {{ form.points }}
-            {{ form.points.errors }}
         </div>
         <button type="submit"
                 {% hx_post "create_recognition" %}
-                hx-target="#recognitions-list"
-                hx-swap="beforebegin"
-                class="w-full bg-blue-500 text-white py-2 rounded-xl hover:bg-blue-600">
+                hx-target="#recognition-form-container"
+                hx-swap="outerHTML"
+                class="w-full py-2 text-white bg-blue-500 rounded-xl hover:bg-blue-600">
             Send Recognition
         </button>
     </form>

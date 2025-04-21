@@ -40,9 +40,9 @@ class SendEmployeeInvites(BaseHxRequest):
         invite_link = f"http://localhost:8000{reverse('users:employee_signup', args=[invite.token])}"
 
         send_mail(
-            subject="You're invited to join our company!",
+            subject="Build People Signup!",
             message=f"Click the link to sign up: {invite_link}",
-            from_email="no-reply@yourdomain.com",
+            from_email="no-reply@buildpeople.com",
             recipient_list=[email],
         )
 
@@ -97,12 +97,24 @@ class CreateRecognition(FormHxRequest):
     form_class = CreateRecognitionForm
     GET_template = "build_people/partials/recognition_form.html"
     POST_template = "build_people/partials/recognition_form.html"
+    refresh_page = True
+
+    def get_form_kwargs(self, **kwargs):
+        return {**super().get_form_kwargs(**kwargs), "user": self.request.user}
 
     def form_valid(self, **kwargs) -> str:
+        points_available = self.request.user.points_available
+        if int(self.form.cleaned_data["points"]) > points_available:
+            messages.error(self.request, "You don't have enough points to give.")
+            return self._get_response(**kwargs)
+        
         recognition = self.form.save(commit=False)
         recognition.created_by = self.request.user
         recognition.save()
         self.form.save_m2m()
+
+        self.request.user.points_available -= int(self.form.cleaned_data["points"])
+        self.request.user.save(update_fields=["points_available"])
 
         messages.success(self.request, "Success!")
 
@@ -113,7 +125,7 @@ class CreateRecognition(FormHxRequest):
         )
 
     def form_invalid(self, **kwargs) -> str:
-        messages.error(self.request, "Failed to create recognition. Please correct the errors below.")
+        messages.error(self.request, "Failed to create recognition. Please make sure all fields are filled in.")
         response = super().form_invalid(**kwargs)
         response.headers["HX-Reswap"] = "innerHTML"
         return response
