@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.urls import reverse
 from hx_requests.hx_requests import BaseHxRequest, FormHxRequest
 from django.core.mail import send_mail
@@ -37,12 +38,12 @@ class SendEmployeeInvites(BaseHxRequest):
     
     def create_and_send_invite(self, company, email):
         invite = EmployeeInvite.objects.create(company=company, email=email)
-        invite_link = f"http://localhost:8000{reverse('users:employee_signup', args=[invite.token])}"
+        invite_link = f"{settings.BASE_URL}{reverse('users:employee_signup', args=[invite.token])}"
 
         send_mail(
             subject="Build People Signup!",
             message=f"Click the link to sign up: {invite_link}",
-            from_email="no-reply@buildpeople.com",
+            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[email],
         )
 

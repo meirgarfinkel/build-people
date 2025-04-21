@@ -21,6 +21,8 @@ DB_NAME = get_parameter("/build-people/DB_NAME")
 DB_USER = get_parameter("/build-people/DB_USER")
 DB_PASSWORD = get_parameter("/build-people/DB_PASSWORD")
 DB_HOST = get_parameter("/build-people/DB_HOST")
+EMAIL_HOST_USER = get_parameter("/build-people/EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = get_parameter("/build-people/EMAIL_HOST_PASSWORD")
 
 DEBUG = False
 
@@ -76,6 +78,7 @@ MIDDLEWARE = [
 # ─────────────────────────────
 ROOT_URLCONF = "app.urls"
 WSGI_APPLICATION = "app.wsgi.application"
+BASE_URL = "https://buildpeople.app"
 
 # ─────────────────────────────
 # Templates
@@ -153,7 +156,13 @@ STORAGES = {
 # ─────────────────────────────
 # Email
 # ─────────────────────────────
-DEFAULT_FROM_EMAIL = "no-reply@buildpeople.com"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.mailersend.net"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = EMAIL_HOST_USER
+EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD
+DEFAULT_FROM_EMAIL = "no-reply@buildpeople.app"
 
 # ─────────────────────────────
 # Crispy Forms
