@@ -8,18 +8,18 @@
         <div class="flex gap-2">
             <span class="w-1/2">
                 <label class="font-medium text-gray-800">Points:</label>
-                {{ form.points|add_class:"w-full rounded-xl border border-gray-300 focus:border-slate-400 focus:ring-1 focus:ring-slate-400" }}
+                {{ form.points|add_class:"w-full rounded-xl border border-gray-300 focus:border-slate-400 focus:ring-slate-400" }}
                 {{ form.points.errors }}
             </span>
             <span class="w-1/2">
                 <label class="font-medium text-gray-800">To:</label>
-                {{ form.receiver|add_class:"w-full rounded-xl border border-gray-300 focus:ring-blue-400" }}
+                {{ form.receiver|add_class:"w-full rounded-xl border border-gray-300 focus:border-slate-400 focus:ring-slate-400" }}
                 {{ form.receiver.errors }}
             </span>
         </div>
         <div>
             <label class="block font-medium text-gray-800">Message:</label>
-            {{ form.message|add_class:"w-full rounded-xl border border-gray-300 resize-none overflow-hidden focus:ring-red-400" }}
+            {{ form.message|add_class:"w-full rounded-xl border border-gray-300 focus:border-slate-400 focus:ring-slate-400" }}
             {{ form.message.errors }}
         </div>
         <button type="submit"
