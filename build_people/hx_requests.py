@@ -42,8 +42,9 @@ class SendEmployeeInvites(BaseHxRequest):
 
         send_mail(
             subject="Build People Signup!",
-            message=f"Click the link to sign up: {invite_link}",
-            from_email=settings.DEFAULT_FROM_EMAIL,
+            message=f"""You have been added to the Build People app by your employer.
+                Please click the link to complete your profile and start using the app: {invite_link}""",
+            from_email=f"Build People <{settings.DEFAULT_FROM_EMAIL}>",
             recipient_list=[email],
         )
 
