@@ -72,7 +72,7 @@ class ToggleHeart(BaseHxRequest):
 
 class AddComment(BaseHxRequest):
     name = "add_comment"
-    POST_template = "build_people/partials/recognitions_list.html"
+    POST_template = "build_people/partials/recognition.html"
     
     def get_context_on_POST(self, **kwargs):
         context = super().get_context_on_POST(**kwargs)

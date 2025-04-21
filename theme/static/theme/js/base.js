@@ -11,17 +11,16 @@ htmx.onLoad(function (content) {
 });
 
 // Hourly Page Refresh Alert
-function scheduleHourlyRefreshAlert() {
+function scheduleHourlyPageRefresh() {
     const now = new Date();
     const minutesUntilNextHour = 60 - now.getMinutes();
     const secondsUntilNextHour = minutesUntilNextHour * 60 - now.getSeconds();
 
     setTimeout(() => {
-        alert("Data has been reset. Please refresh the page!");
-        scheduleHourlyRefreshAlert(); // Schedule for next hour
+        location.reload(); // Auto-refresh the page
     }, secondsUntilNextHour * 1000);
 }
-scheduleHourlyRefreshAlert();
+scheduleHourlyPageRefresh();
 
 // Alpine.js Code Viewer Component
 document.addEventListener("alpine:init", () => {
