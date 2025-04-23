@@ -52,28 +52,30 @@
                                 {% heroicon "home" class="w-6 h-6" %}
                                 Home
                             </a>
-                            <a href="{% url 'build_people:home' %}"
-                               class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
-                                {% heroicon "trophy" class="w-6 h-6" %}
-                                Leaderboard
-                            </a>
                             <a href="{% url 'build_people:profile' %}"
                                class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
                                 {% heroicon "user" class="w-6 h-6" %}
                                 Profile
                             </a>
-                            <hr />
-                            <a href="{% url 'build_people:subscriptions' %}"
-                               class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
-                                {% heroicon "organization" class="w-6 h-6" %}
-                                Organization
-                            </a>
-                            {% if user.is_superuser %}
-                                <a href="{% url 'admin:index' %}"
-                                   class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
-                                    {% heroicon "settings" class="w-6 h-6" %}
-                                    Admin
+                            {% if user.is_owner or user.is_superuser %}
+                                <hr />
+                                <a href="{% url 'build_people:subscriptions' %}"
+                                class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
+                                    {% heroicon "organization" class="w-6 h-6" %}
+                                    Company
                                 </a>
+                                <a href="{% url 'build_people:subscriptions' %}"
+                                           class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
+                                            {% heroicon "rocket" class="w-6 h-6" %}
+                                            Core Values
+                                        </a>
+                                {% if user.is_superuser %}
+                                    <a href="{% url 'admin:index' %}"
+                                    class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
+                                        {% heroicon "settings" class="w-6 h-6" %}
+                                        Admin
+                                    </a>
+                                {% endif %}
                             {% endif %}
                         </div>
                         <a href="{% url 'users:logout' %}"
@@ -114,28 +116,30 @@
                                         {% heroicon "home" class="w-6 h-6" %}
                                         Home
                                     </a>
-                                    <a href="{% url 'build_people:home' %}"
-                                       class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
-                                        {% heroicon "trophy" class="w-6 h-6" %}
-                                        Leaderboard
-                                    </a>
                                     <a href="{% url 'build_people:profile' %}"
                                        class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
                                         {% heroicon "user" class="w-6 h-6" %}
                                         Profile
                                     </a>
-                                    <hr />
-                                    <a href="{% url 'build_people:subscriptions' %}"
-                                       class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
-                                        {% heroicon "organization" class="w-6 h-6" %}
-                                        Organization
-                                    </a>
-                                    {% if user.is_superuser %}
-                                        <a href="{% url 'admin:index' %}"
-                                           class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
-                                            {% heroicon "settings" class="w-6 h-6" %}
-                                            Admin
+                                    {% if user.is_owner or user.is_superuser %}
+                                        <hr />
+                                        <a href="{% url 'build_people:subscriptions' %}"
+                                        class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
+                                            {% heroicon "organization" class="w-6 h-6" %}
+                                            Company
                                         </a>
+                                        <a href="{% url 'build_people:subscriptions' %}"
+                                           class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
+                                            {% heroicon "rocket" class="w-6 h-6" %}
+                                            Core Values
+                                        </a>
+                                        {% if user.is_superuser %}
+                                            <a href="{% url 'admin:index' %}"
+                                            class="flex items-center w-full gap-2 px-4 py-2 rounded-xl hover:bg-blue-500 hover:text-white">
+                                                {% heroicon "settings" class="w-6 h-6" %}
+                                                Admin
+                                            </a>
+                                        {% endif %}
                                     {% endif %}
                                 </div>
                                 <a href="{% url 'users:logout' %}"

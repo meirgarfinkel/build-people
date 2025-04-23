@@ -17,7 +17,8 @@ class HomeView(LoginRequiredMixin, HtmxViewMixin, ListView):
         hearts_qs = Recognition.objects.filter(id=OuterRef("pk"), hearts=user)
 
         return (
-            Recognition.objects.all()
+            Recognition.objects.filter(created_by__company=user.company)
+            .select_related("created_by")
             .annotate(hearted_by_user=Exists(hearts_qs))
             .prefetch_related("hearts", "comments")
             .order_by("-created_at")

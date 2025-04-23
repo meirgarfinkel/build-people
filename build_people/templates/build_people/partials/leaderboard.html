@@ -39,13 +39,13 @@
               id="comment-form-{{ recognition.id }}"
               {% hx_post "add_comment" object=recognition %}
               hx-target="#recognition-{{ recognition.id }}"
-              hx-swap="outerHTML settle:1"
+              hx-swap="outerHTML"
               class="flex items-center w-full">
             {% csrf_token %}
             <textarea name="content"
                       placeholder="Add your comment..."
                       required
-                      class="w-full border border-gray-300 resize-none rounded-xl focus:border-slate-400 focus:ring-slate-400"></textarea>
+                      class="w-full border border-gray-300 rounded-xl focus:border-slate-400 focus:ring-slate-400"></textarea>
             <button type="submit">
                 {% heroicon "send" class="w-8 h-8 p-2 ml-2 text-white bg-green-500 rounded-full" %}
             </button>
