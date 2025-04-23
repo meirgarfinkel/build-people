@@ -42,8 +42,11 @@ class SendEmployeeInvites(BaseHxRequest):
 
         send_mail(
             subject="Build People Signup!",
-            message=f"""You have been added to the Build People app by your employer.
-                Please click the link to complete your profile and start using the app: {invite_link}""",
+            message=f"""
+                You have been added to the Build People app by your employer.<br>
+                Please click the link to complete your profile and start using the app:<br>
+                <a href='{invite_link}'>Invite Link</a><br>
+            """,
             from_email=f"Build People <{settings.DEFAULT_FROM_EMAIL}>",
             recipient_list=[email],
         )
@@ -127,9 +130,10 @@ class CreateRecognition(FormHxRequest):
         )
 
     def form_invalid(self, **kwargs) -> str:
+        self.is_post_request = False
         messages.error(self.request, "Failed to create recognition. Please make sure all fields are filled in.")
         response = super().form_invalid(**kwargs)
-        response.headers["HX-Reswap"] = "innerHTML"
+        response.headers["HX-Reswap"] = "outerHTML"
         return response
 
 

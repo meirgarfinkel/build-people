@@ -2,32 +2,35 @@
 {% load shared_tags %}
 
 <div class="w-full p-6 transition-transform duration-200 bg-white shadow-md rounded-xl hover:shadow-lg" id="recognition-form-container">
-    <h3 class="mb-4 text-xl font-semibold text-center">Post Recognition</h3>
+    <div class="flex justify-between">
+        <h3 class="text-xl font-semibold">Give Recognition</h3>
+        <span class="flex p-1 px-3 bg-green-100 rounded-2xl">{% heroicon "coins" class="w-6 h-6 pr-1" %} {{ user.points_available }}</span>
+    </div>
     <form method="post" class="space-y-4">
         {% csrf_token %}
         <div class="flex gap-2">
-            <span class="w-1/2">
-                <label class="font-medium text-gray-800">Points:</label>
+            <span class="w-3/12">
+                <label class="font-medium text-gray-800">Amount:</label>
                 {{ form.points|add_class:"w-full rounded-xl border border-gray-300 focus:border-slate-400 focus:ring-slate-400" }}
-                {{ form.points.errors }}
+                {% for error in form.points.errors %}<p class="text-sm text-red-500">{{ error }}</p>{% endfor %}
             </span>
-            <span class="w-1/2">
-                <label class="font-medium text-gray-800">To:</label>
+            <span class="flex-1">
+                <label class="font-medium text-gray-800">Recipient:</label>
                 {{ form.receiver|add_class:"w-full rounded-xl border border-gray-300 focus:border-slate-400 focus:ring-slate-400" }}
-                {{ form.receiver.errors }}
+                {% for error in form.receiver.errors %}<p class="text-sm text-red-500">{{ error }}</p>{% endfor %}
             </span>
         </div>
         <div>
             <label class="block font-medium text-gray-800">Message:</label>
-            {{ form.message|add_class:"w-full rounded-xl border border-gray-300 focus:border-slate-400 focus:ring-slate-400" }}
-            {{ form.message.errors }}
+            {{ form.message|add_class:"w-full rounded-xl border border-gray-300 focus:border-slate-400 focus:ring-slate-400 resize-none" }}
+            {% for error in form.message.errors %}<p class="text-sm text-red-500">{{ error }}</p>{% endfor %}
         </div>
         <button type="submit"
                 {% hx_post "create_recognition" %}
                 hx-target="#recognition-form-container"
                 hx-swap="outerHTML"
                 class="w-full py-2 text-white bg-blue-500 rounded-xl hover:bg-blue-600">
-            Submit
+            Give Recognition
         </button>
     </form>
 </div>

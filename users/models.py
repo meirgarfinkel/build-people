@@ -1,3 +1,4 @@
+from functools import cached_property
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from users.enums import Roles
@@ -33,3 +34,7 @@ class User(AbstractUser, TimestampedModelMixin):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
+    
+    @cached_property
+    def is_owner(self):
+        return self.role == Roles.EMPLOYER

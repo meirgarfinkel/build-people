@@ -1,19 +1,17 @@
 <div x-show="open"
-     class="mt-3 border border-gray-300 rounded-xl p-2 pr-1"
+     class="p-2 pr-1 mt-3 border border-gray-300 rounded-xl"
      id="comments-list-{{ recognition.id }}">
-    <div class="max-h-60 overflow-y-auto pr-2 scrollbar">
+    <div class="pr-2 overflow-y-auto max-h-60 scrollbar">
         {% if recognition.comments.count > 0 %}
-            <p class="text-sm text-gray-500 mb-2 text-center">Comments:</p>
+            <p class="mb-2 text-sm text-center text-gray-500">Comments:</p>
         {% endif %}
         {% for comment in recognition.comments.all %}
             <div id="comment-{{ comment.id }}">
                 <p>{{ comment.content }}</p>
                 <p class="text-sm text-gray-500">- {{ comment.user }}</p>
                 <!-- Separator for inbetween comments -->
-                {% if not forloop.last %}<div class="border-t border-gray-300 my-2"></div>{% endif %}
+                {% if not forloop.last %}<div class="my-2 border-t border-gray-300"></div>{% endif %}
             </div>
-        {% empty %}
-            <p class="text-sm text-gray-500">No comments yet, be the first!</p>
         {% endfor %}
     </div>
 </div>

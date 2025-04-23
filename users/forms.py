@@ -11,7 +11,7 @@ class EmployerSignupForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ("first_name", "last_name", "email", "password1", "password2", "company_name")
+        fields = ("company_name", "first_name", "last_name", "email", "password1", "password2")
 
     def clean_username(self):
         # Skip the unique check for username as we've made it non-unique
