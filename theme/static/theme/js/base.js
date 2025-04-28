@@ -1,3 +1,5 @@
+import "../../../static_src/node_modules/preline/dist/preline.js";
+
 // HTMX Bootstrap Toast Support
 htmx.onLoad(function (content) {
     var toasts = content.querySelectorAll(".toast");
@@ -97,29 +99,29 @@ document.addEventListener("DOMContentLoaded", () => {
             messagesContainer.style.opacity = "0";
             setTimeout(() => messagesContainer.remove(), 500);
         }
-    }, 2000);
+    }, 5000);
 });
 
 // Mobile Menu Toggle
 document.addEventListener("DOMContentLoaded", () => {
-    const mobileMenuButton = document.getElementById('mobileMenuButton');
-    const mobileMenu = document.getElementById('mobileMenu');
-    const closeMenu = document.getElementById('closeMenu');
+    const mobileMenuButton = document.getElementById("mobileMenuButton");
+    const mobileMenu = document.getElementById("mobileMenu");
+    const closeMenu = document.getElementById("closeMenu");
 
     // Ensure elements exist before adding event listeners
     if (mobileMenuButton && mobileMenu && closeMenu) {
-        mobileMenuButton.addEventListener('click', () => {
-            mobileMenu.classList.remove('hidden');
+        mobileMenuButton.addEventListener("click", () => {
+            mobileMenu.classList.remove("hidden");
         });
 
-        closeMenu.addEventListener('click', () => {
-            mobileMenu.classList.add('hidden');
+        closeMenu.addEventListener("click", () => {
+            mobileMenu.classList.add("hidden");
         });
 
         // Close modal when clicking outside
-        mobileMenu.addEventListener('click', (e) => {
-            if (!e.target.closest('.max-w-xs')) {
-                mobileMenu.classList.add('hidden');
+        mobileMenu.addEventListener("click", (e) => {
+            if (!e.target.closest(".max-w-xs")) {
+                mobileMenu.classList.add("hidden");
             }
         });
     }

@@ -30,6 +30,7 @@ class Recognition(TimestampedModelMixin):
     receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="received_recognitions")
     message = models.TextField()
     points = models.PositiveIntegerField()
+    core_values = models.ManyToManyField("build_people.CoreValue", related_name="recognitions")
     hearts = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         related_name="hearted_recognitions",
@@ -52,9 +53,26 @@ class RecognitionComment(TimestampedModelMixin):
         on_delete=models.CASCADE
     )
     content = models.TextField(help_text="Comment content")
-
-    def __str__(self):
-        return f"Comment by {self.user} on {self.recognition}"
     
     class Meta:
         ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Comment by {self.user} on {self.recognition}"
+
+
+class CoreValue(models.Model):
+    """
+    Core value model that represents the core values of the company.
+    """
+    company = models.ForeignKey("build_people.Company", on_delete=models.CASCADE, related_name="core_values")
+    name = models.CharField(max_length=255)
+    
+    class Meta:
+        ordering = ["name"]
+        constraints = [
+            models.UniqueConstraint(fields=['company', 'name'], name='unique_core_value')
+        ]
+    
+    def __str__(self):
+        return self.name

@@ -3,7 +3,7 @@ from django.urls import reverse
 from hx_requests.hx_requests import BaseHxRequest, FormHxRequest
 from django.core.mail import send_mail
 from django.contrib import messages
-from build_people.forms import CreateRecognitionForm
+from build_people.forms import CreateRecognitionForm, CreateUpdateCoreValueForm
 from build_people.models import EmployeeInvite
 from users.forms import UpdateUserForm
 from django.utils.text import slugify
@@ -169,3 +169,51 @@ class UpdateUser(FormHxRequest):
         response = super().form_invalid(**kwargs)
         response.headers["HX-Reswap"] = "innerHTML"
         return response
+
+
+class CreateUpdateCoreValue(FormHxRequest):
+    name = "create_update_core_value"
+    form_class = CreateUpdateCoreValueForm
+    GET_template = "build_people/partials/core_value_form.html"
+    GET_block = "content"
+    redirect = reverse("build_people:core_values")
+
+    def get_context_on_GET(self, **kwargs):
+        context = super().get_context_on_GET(**kwargs)
+        core_value = self.hx_object or None
+        context["core_value"] = core_value
+        return context
+
+    def get_form_kwargs(self, **kwargs):
+        kwargs = super().get_form_kwargs(**kwargs)
+        kwargs["company"] = self.request.user.company
+        return kwargs
+
+    def form_valid(self, **kwargs) -> str:
+        core_value = self.form.save(commit=False)
+        core_value.save()
+        messages.success(self.request, "Success!")
+
+        return self._get_response(
+            template="build_people/core_values_list.html",
+            context={"core_value": core_value},
+            **kwargs
+        )
+
+    def form_invalid(self, **kwargs) -> str:
+        self.is_post_request = False
+        messages.error(self.request, "Failed to create core value. Please make sure all fields are filled in.")
+        response = super().form_invalid(**kwargs)
+        response.headers["HX-Reswap"] = "outerHTML"
+        return response
+
+
+class DeleteCoreValue(BaseHxRequest):
+    name = "delete_core_value"
+    redirect = reverse("build_people:core_values")
+
+    def post(self, request, *args, **kwargs):
+        core_value = self.hx_object
+        core_value.delete()
+        messages.success(request, "Core value deleted successfully.")
+        return super().post(request, *args, **kwargs)
