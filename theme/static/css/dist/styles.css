@@ -1105,10 +1105,6 @@ select {
   width: 5rem;
 }
 
-.w-3\/12 {
-  width: 25%;
-}
-
 .w-32 {
   width: 8rem;
 }
@@ -1496,10 +1492,6 @@ select {
   padding: 2rem;
 }
 
-.p-7 {
-  padding: 1.75rem;
-}
-
 .\!py-0\.5 {
   padding-top: 0.125rem !important;
   padding-bottom: 0.125rem !important;
@@ -1540,16 +1532,6 @@ select {
   padding-bottom: 0.625rem;
 }
 
-.py-6 {
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
-}
-
-.py-8 {
-  padding-top: 2rem;
-  padding-bottom: 2rem;
-}
-
 .py-4 {
   padding-top: 1rem;
   padding-bottom: 1rem;
@@ -1571,20 +1553,12 @@ select {
   padding-right: 0.5rem;
 }
 
-.pt-3 {
-  padding-top: 0.75rem;
-}
-
-.pr-6 {
-  padding-right: 1.5rem;
-}
-
-.pr-8 {
-  padding-right: 2rem;
-}
-
 .pr-4 {
   padding-right: 1rem;
+}
+
+.pt-3 {
+  padding-top: 0.75rem;
 }
 
 .text-center {
@@ -2048,10 +2022,6 @@ select {
 
   .md\:p-8 {
     padding: 2rem;
-  }
-
-  .md\:p-4 {
-    padding: 1rem;
   }
 
   .md\:py-8 {

@@ -9,6 +9,7 @@
         "build:tailwind": "cross-env NODE_ENV=production tailwindcss --postcss -i ./src/styles.css -o ../static/css/dist/styles.css --minify",
         "tailwindcss": "node ./node_modules/tailwindcss/lib/cli.js",
         "dev": "npx cross-env NODE_ENV=development tailwindcss --postcss -i ./src/styles.css -o ../static/css/dist/styles.css -w",
+        "build:js": "esbuild ../static/theme/js/base.js --bundle --outfile=../static/theme/js/bundle.js --minify --sourcemap",
         "watch:css": "npx cross-env NODE_ENV=development tailwindcss --postcss -i ./src/styles.css -o ../static/css/dist/styles.css --watch",
         "watch:js": "esbuild ../static/theme/js/base.js --bundle --outfile=../static/theme/js/bundle.js --watch --sourcemap"
     },
