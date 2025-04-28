@@ -41,5 +41,14 @@ class SubscriptionsView(HtmxViewMixin, LoginRequiredMixin, TemplateView):
     template_name = "build_people/subscriptions.html"
 
 
+class CoreValuesView(HtmxViewMixin, LoginRequiredMixin, TemplateView):
+    template_name = "build_people/core_values_list.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["core_values"] = self.request.user.company.core_values.all()
+        return context
+
+
 class ProfileView(HtmxViewMixin, LoginRequiredMixin, TemplateView):
     template_name = "build_people/profile.html"

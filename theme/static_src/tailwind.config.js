@@ -6,6 +6,7 @@ module.exports = {
         path.join(__dirname, "../../**/templates/**/*.html"), // App-specific templates
         path.join(__dirname, "theme/templates/**/*.html"), // Tailwind theme templates
         path.join(__dirname, "theme/static_src/**/*.js"), // JavaScript files
+        path.join(__dirname, "node_modules/preline/**/*.js"), // Preline components
     ],
     theme: {
         extend: {},
