@@ -1,12 +1,3 @@
-import "preline";
-
-// Init Preline dropdowns safely
-function initPreline() {
-    setTimeout(() => {
-        window.HSSelect?.init?.();
-    }, 0);
-}
-
 document.addEventListener("DOMContentLoaded", () => {
     // Theme Toggle
     const toggleButton = document.getElementById("theme-toggle");
@@ -51,8 +42,6 @@ document.addEventListener("DOMContentLoaded", () => {
             setTimeout(() => messagesContainer.remove(), 500);
         }
     }, 5000);
-
-    initPreline();
 });
 
 // Auto-expand Textareas on Input
@@ -80,9 +69,6 @@ htmx.onLoad((content) => {
         textarea.style.overflowY = "hidden";
         textarea.style.height = textarea.scrollHeight + "px";
     });
-
-    // Init Preline dropdowns for HTMX content
-    initPreline();
 });
 
 // Hourly Page Refresh

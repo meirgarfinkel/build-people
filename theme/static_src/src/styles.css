@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import "preline/dist/variants.css";
-
 @layer utilities {
     /* Hide scrollbar */
     .scrollbar-hide {

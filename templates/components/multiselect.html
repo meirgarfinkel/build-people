@@ -1,0 +1,37 @@
+{% load shared_tags %}
+
+<div x-data="multiselect({ name: '{{ name }}' })" class="relative w-full">
+    <label class="block font-medium text-gray-800">{{ label }}</label>
+
+    <button type="button"
+            @click="multiselect_open = !multiselect_open"
+            class="w-full px-4 py-2 text-left bg-white border border-gray-300 rounded-xl">
+        <template x-if="selected.length">
+            <span x-text="selected.map(o => o.text).join(', ')"></span>
+        </template>
+        <template x-if="!selected.length">
+            <span class="text-gray-500">Select options...</span>
+        </template>
+    </button>
+
+    <div x-show="multiselect_open"
+         x-collapse
+         x-cloak
+         @click.outside="multiselect_open = false"
+         class="absolute z-10 w-full mt-2 overflow-y-auto bg-white border border-gray-200 shadow-xl rounded-xl max-h-60">
+        {% for option in options %}
+            <div class="flex items-center px-4 py-2 cursor-pointer hover:bg-gray-100"
+                 @click="toggle({ id: '{{ option|get_attr:value_attr }}', text: '{{ option|get_attr:text_attr }}' })">
+                <input type="checkbox"
+                       :checked="selectedIds.includes('{{ option|get_attr:value_attr }}')"
+                       class="mr-2 rounded" />
+                <span>{{ option|get_attr:text_attr }}</span>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Hidden input(s) to submit -->
+    <template x-for="item in selected" :key="item.id">
+        <input type="hidden" :name="name" :value="item.id">
+    </template>
+</div>

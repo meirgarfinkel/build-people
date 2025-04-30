@@ -12,29 +12,27 @@
             {% endblock title %}
 
         </title>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <meta name="viewport"
-              content="width=device-width,minimum-scale=1,initial-scale=1">
-        <link rel="shortcut icon"
-              type="image/x-icon"
-              href="{% static 'theme/images/favicon.ico' %}">
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+
+        <link rel="shortcut icon" href="{% static 'theme/images/favicon.ico' %}" />
+
         <!-- HTMX -->
         <script src="{% static 'theme/js/htmx.min.js' %}"></script>
-        <meta name="htmx-config" content='{"useTemplateFragments":"true"}'>
-        <!-- AlpineJS plugins must be placed before the core alpineJS cdn -->
-        <!-- <script src="https://unpkg.com/htmx.org@latest/dist/ext/alpine-morph.js"></script> -->
-        <script defer
-                src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
-        <script defer
-                src="https://cdn.jsdelivr.net/npm/@alpinejs/persist@3.x.x/dist/cdn.min.js"></script>
-        <script defer
-                src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-        <script src="{% static 'theme/js/base.js' %}"></script>
+        <meta name="htmx-config" content='{"useTemplateFragments":"true"}' />
+
+        <!-- AlpineJS plugins (must come before Alpine core) -->
+        <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/persist@3.x.x/dist/cdn.min.js"></script>
+
+        <!-- Alpine Core -->
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+        <script src="{% static 'theme/js/alpine_components.js' %}" defer></script>
 
         {% block css %}
             {% tailwind_css %}
-            <link rel="stylesheet" href="staticfiles/css/dist/styles.css">
+            <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}" />
         {% endblock css %}
 
     </head>
@@ -180,7 +178,7 @@
         </main>
 
         {% block javascript %}
-            <script type="module" src="{% static 'theme/js/bundle.js' %}"></script>
+            <script src="{% static 'theme/js/base.js' %}"></script>
         {% endblock javascript %}
 
     </body>
