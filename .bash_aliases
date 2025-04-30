@@ -30,3 +30,11 @@ function hotfix() {
     update
     git push --set-upstream origin "$1"
 }
+
+function pr() {
+    switch "$1"
+    ga
+    gc "$2"
+    update
+    git push --set-upstream origin "$1"
+}
