@@ -27,9 +27,11 @@ RUN uv lock && uv sync --frozen
 
 # Install Node.js dependencies
 WORKDIR /app/theme/static_src
-RUN npm install
+COPY theme/static_src/package*.json ./
+RUN npm install --legacy-peer-deps
+COPY theme/static_src ./
 
-# Build Tailwind assets
+# Install Tailwind CSS dependencies
 RUN npm run build
 WORKDIR /app
 
