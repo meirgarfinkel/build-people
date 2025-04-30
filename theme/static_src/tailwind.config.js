@@ -6,7 +6,7 @@ module.exports = {
         path.join(__dirname, "../../**/templates/**/*.html"), // App-specific templates
         path.join(__dirname, "theme/templates/**/*.html"), // Tailwind theme templates
         path.join(__dirname, "theme/static_src/**/*.js"), // JavaScript files
-        path.join(__dirname, "node_modules/preline/**/*.js"), // Preline components
+        path.join(__dirname, "theme/static_src/node_modules/preline/dist/*.js"), // Preline components
     ],
     theme: {
         extend: {},
@@ -15,6 +15,7 @@ module.exports = {
         require("@tailwindcss/forms"),
         require("@tailwindcss/typography"),
         require("@tailwindcss/aspect-ratio"),
+        require('preline/plugin')
     ],
     output: path.join(__dirname, "theme/static/css/dist/styles.css"),
 }

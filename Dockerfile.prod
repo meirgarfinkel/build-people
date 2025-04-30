@@ -4,10 +4,13 @@ FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    nodejs npm \
-    postgresql-client && \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        curl \
+        postgresql-client && \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
@@ -25,10 +28,11 @@ RUN uv lock && uv sync --frozen
 # Install Node.js dependencies
 WORKDIR /app/theme/static_src
 RUN npm install
-WORKDIR /app
 
 # Build Tailwind assets
-RUN uv run python manage.py tailwind build
+RUN npm run build
+WORKDIR /app
+
 
 # Collect static files
 RUN uv run python manage.py collectstatic --noinput
