@@ -11,20 +11,14 @@ class CreateRecognitionForm(forms.ModelForm):
     class Meta:
         model = Recognition
         fields = ["receiver", "points", "core_values", "message"]
-        widgets = {
-            'core_values': forms.CheckboxSelectMultiple(),
-        }
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
 
-        # Limit receiver choices to users in the same company as the giver,
-        # and exclude the current user
         self.fields["receiver"].queryset = User.objects.filter(company=user.company).exclude(id=user.id)
         self.fields["receiver"].required = True
 
-        # Limit core_values to the company's core values
         self.fields["core_values"].queryset = CoreValue.objects.filter(company=user.company)
         self.fields["core_values"].required = True
 
